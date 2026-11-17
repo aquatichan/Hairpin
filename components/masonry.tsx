@@ -50,7 +50,11 @@ export function Masonry({ looks }: { looks: Look[] }) {
         {shown.map((look, i) => (
           <li key={look.id} className="group mb-2 animate-rise break-inside-avoid lg:mb-4" style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
             <button type="button" onClick={() => setOpen(look)} aria-label={`Open ${look.name}`} className="relative block w-full overflow-hidden rounded-card bg-graphite" style={{ aspectRatio: `1 / ${look.ratio}` }}>
-              <Image src={look.image} alt={look.name} fill sizes="(min-width: 1280px) 20vw, (min-width: 768px) 33vw, 50vw" className="object-cover transition-transform duration-500 ease-out group-hover:scale-105" priority={i < 4} />
+              {look.video ? (
+                <video src={look.video} poster={look.image} autoPlay muted loop playsInline preload="metadata" aria-label={look.name} className="absolute inset-0 size-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" />
+              ) : (
+                <Image src={look.image} alt={look.name} fill sizes="(min-width: 1280px) 20vw, (min-width: 768px) 33vw, 50vw" className="object-cover transition-transform duration-500 ease-out group-hover:scale-105" priority={i < 4} />
+              )}
             </button>
             <div className="flex items-center justify-between gap-2 px-2 pt-2">
               <p className="truncate text-body font-medium">{look.name}</p>

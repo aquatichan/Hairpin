@@ -2,10 +2,11 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { HeroCanvas } from "@/components/head/hero-canvas";
+import { Marquee } from "@/components/marquee";
 import { Button } from "@/components/ui/button";
 import { ChoiceRow } from "@/components/ui/choice-row";
 import { RevealText } from "@/components/ui/reveal-text";
+import { libraryLooks } from "@/lib/looks";
 import { saveProfile, useProfile, type Profile } from "@/lib/profile";
 
 const LENGTHS = ["short", "medium", "long"] as const;
@@ -34,8 +35,9 @@ function Welcome() {
 
   return (
     <main className="relative flex min-h-dvh flex-1 flex-col overflow-hidden bg-onyx">
-      <div className="absolute inset-0 opacity-40">
-        <HeroCanvas framing="center" fixedTurn={0.4} />
+      <div className="absolute inset-x-0 top-0 flex flex-col gap-3 pt-6 opacity-40">
+        <Marquee looks={libraryLooks} duration={120} />
+        <Marquee looks={libraryLooks} offset={6} duration={100} reverse tone="champagne" />
       </div>
       <div className="absolute inset-0 bg-linear-to-t from-onyx via-onyx/70 to-transparent" aria-hidden />
       <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-end gap-6 p-6 lg:justify-center">

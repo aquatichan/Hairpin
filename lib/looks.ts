@@ -7,6 +7,8 @@ export type Look = {
   texture: "straight" | "wavy" | "curly" | "coily";
   notes: string;
   image: string;
+  /** Optional short muted loop; `image` is its poster frame. */
+  video?: string;
   /** Height divided by width, so tiles reserve their space before the image loads. */
   ratio: number;
   /** Photographer credit, shown on the look sheet. */

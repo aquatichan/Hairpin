@@ -1,5 +1,3 @@
 # Hairpin
 
 Hairpin lets you try any haircut on your own photo before you sit in the barber's chair: browse the hair library or upload a screenshot of a cut you've seen, preview it on yourself, decode what it's called, and turn the one you like into a Barber Brief you can show your barber. It is a Next.js web app (installable as a PWA) that uses Firebase for sign-in and the Publik API for all AI, with an optional OpenAI fallback. To run it, `npm install`, copy `.env.example` to `.env.local`, replace the `PLACEHOLDER_[...]` values you have, and `npm run dev`; anything left as a placeholder simply stays switched off.
-
-The 3D head is "Infinite, 3D Head Scan" by Lee Perry-Smith (www.triplegangers.com), used under a Creative Commons Attribution 3.0 licence.
