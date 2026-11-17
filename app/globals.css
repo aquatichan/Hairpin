@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+/*
+  Hairpin design tokens. This is the ONLY place sizes and colors are defined.
+  The default Tailwind color, type, radius and font scales are reset below, so
+  utilities like text-sm, rounded-md or bg-zinc-900 do not exist in this app.
+  Spacing: use only the 4px-based steps 1, 2, 3, 4, 6, 8, 12, 16.
+*/
+@theme {
+  --color-*: initial;
+  --color-onyx: #0b0b0c;
+  --color-graphite: #161618;
+  --color-slate: #222225;
+  --color-hairline: #2e2e32;
+  --color-ivory: #f4efe6;
+  --color-stone: #a8a29a;
+  --color-champagne: #c9a96e;
+  --color-transparent: transparent;
+
+  --font-*: initial;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --font-brand: var(--font-bodoni), "Didot", "Bodoni 72", serif;
+
+  --text-*: initial;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.25rem;
+  --text-lead: 1rem;
+  --text-lead--line-height: 1.5rem;
+  --text-title: 1.5rem;
+  --text-title--line-height: 1.75rem;
+  --text-headline: 2.25rem;
+  --text-headline--line-height: 2.5rem;
+  --text-display: clamp(2.75rem, 7vw, 5.5rem);
+  --text-display--line-height: 1;
+
+  --radius-*: initial;
+  --radius-card: 1rem;
+  --radius-full: 9999px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-rise: rise 0.9s var(--ease-out) both;
+  --animate-fade: fade 0.6s var(--ease-out) both;
+  --animate-sheet: sheet 0.35s var(--ease-out) both;
+  --animate-drift: drift 24s ease-in-out infinite alternate;
+  --animate-marquee: marquee var(--marquee-duration, 80s) linear infinite;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(0.6em);
+      filter: blur(8px);
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes drift {
+    to {
+      transform: translate(6%, -4%) scale(1.15);
+    }
+  }
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes sheet {
+    from {
+      opacity: 0;
+      transform: translateY(2rem);
+    }
+  }
+}
+
+html {
+  color-scheme: dark;
+  background: var(--color-onyx);
+}
+
+body {
+  background: var(--color-onyx);
+  color: var(--color-ivory);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  font-variant-numeric: tabular-nums;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ivory);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  /* An infinite marquee at near-zero duration would strobe, so hold it still instead. */
+  [data-marquee] {
+    animation: none !important;
+  }
+}
