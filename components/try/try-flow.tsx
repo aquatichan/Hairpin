@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiClientError } from "@/lib/api-client";
 import { resizeToJpeg } from "@/lib/image";
 import { localStore, type StoredRender } from "@/lib/local-store";
+import { takePendingReference } from "@/lib/handoff";
 import { requestRender } from "@/lib/tryon-client";
 import { previewLooks } from "@/lib/looks";
 import { useBlobUrl, useLocal } from "@/lib/use-local";
@@ -32,6 +33,17 @@ export function TryFlow() {
   const [error, setError] = useState<ApiClientError | null>(null);
   const inFlight = useRef(false);
   const currentUrl = useBlobUrl(current?.result);
+
+  // Pick up a screenshot handed over from the analyzer each time this screen is shown.
+  useEffect(() => {
+    const handed = takePendingReference();
+    if (!handed) return;
+    queueMicrotask(() => {
+      setReference(handed);
+      setCurrent(null);
+      setError(null);
+    });
+  }, []);
 
   if (photo === undefined) return <div className="mx-auto max-w-md px-4 py-6"><Skeleton className="aspect-[4/5]" /></div>;
   if (photo === null) return <PhotoSetup />;

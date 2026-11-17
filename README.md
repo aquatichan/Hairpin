@@ -1,26 +1,5 @@
 # Hairpin
 
-Try any cut on you before you sit in the chair.
+Hairpin lets you try any haircut on your own photo before you sit in the barber's chair: browse the hair library or upload a screenshot of a cut you've seen, preview it on yourself, decode what it's called, and turn the one you like into a Barber Brief you can show your barber. It is a Next.js web app (installable as a PWA) that uses Firebase for sign-in and the Publik API for all AI, with an optional OpenAI fallback. To run it, `npm install`, copy `.env.example` to `.env.local`, replace the `PLACEHOLDER_[...]` values you have, and `npm run dev`; anything left as a placeholder simply stays switched off.
 
-Next.js (App Router) + TypeScript + Tailwind v4, Firebase Auth and Storage, and the Publik API for all text and image generation.
-
-## Run
-
-```bash
-npm install
-cp .env.example .env.local   # fill in values; never commit this file
-npm run dev
-```
-
-Without Firebase env values the app runs in preview mode: sign-in is disabled and the gallery is open.
-
-## Design rules
-
-All colors, type sizes, radii and fonts are tokens in `app/globals.css`. Tailwind's default scales are reset there, so only the tokens exist. Dark mode only. Crimson is the single accent.
-
-## Structure
-
-- `app/page.tsx`: sign-in hero (3D head in `components/head`)
-- `app/(app)`: signed-in shell with Discover, Try, Saved, You
-- `lib/publik.ts`: the only server-side door to the Publik API
-- `scripts/render-looks.cjs`: re-renders the preview catalog stills
+The 3D head is "Infinite, 3D Head Scan" by Lee Perry-Smith (www.triplegangers.com), used under a Creative Commons Attribution 3.0 licence.

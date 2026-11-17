@@ -1,6 +1,7 @@
 import { errorResponse, publikFailure } from "@/lib/api-error";
 import { barberBriefSchema, briefRequestSchema, type BarberBrief } from "@/lib/brief";
-import { chat, publikConfigured, publikMock } from "@/lib/publik";
+import { aiConfigured, chat, extractJson } from "@/lib/ai";
+import { publikMock } from "@/lib/publik";
 import { verifyCaller } from "@/lib/server-auth";
 
 const SYSTEM = `You write a Barber Brief: clear instructions a client shows their barber.
@@ -16,12 +17,8 @@ Rules:
 const DEMO = "Demo text. Connect Publik to write this section.";
 
 function parse(text: string): BarberBrief | null {
-  try {
-    const result = barberBriefSchema.safeParse(JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)));
-    return result.success ? result.data : null;
-  } catch {
-    return null;
-  }
+  const result = barberBriefSchema.safeParse(extractJson(text));
+  return result.success ? result.data : null;
 }
 
 export async function POST(request: Request) {
@@ -38,7 +35,7 @@ export async function POST(request: Request) {
     };
     return Response.json({ brief, mock: true });
   }
-  if (!publikConfigured) return errorResponse(503, { code: "not_connected", message: "AI briefs aren't connected in this build yet." });
+  if (!aiConfigured()) return errorResponse(503, { code: "not_connected", message: "AI briefs aren't connected in this build yet." });
   if (!(await verifyCaller(request))) return errorResponse(401, { code: "signed_out", message: "Please sign in again." });
 
   const user = [`Haircut: ${lookName}.`, tweak ? `Adjustment: ${tweak}.` : "", notes ? `Client notes: ${notes}` : ""].filter(Boolean).join("\n");

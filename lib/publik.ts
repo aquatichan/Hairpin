@@ -1,4 +1,5 @@
 import "server-only";
+import { real } from "./env";
 
 /**
  * The single server-side door to the Publik API. All text and image generation
@@ -18,11 +19,11 @@ export class PublikError extends Error {
 
 export type PublikResult<T> = { data: T; chargeMicros: number | null };
 
-export const publikConfigured = Boolean(process.env.PUBLIK_API_BASE_URL && process.env.PUBLIK_API_KEY);
+export const publikConfigured = Boolean(real(process.env.PUBLIK_API_BASE_URL) && real(process.env.PUBLIK_API_KEY));
 
 async function call<T>(path: string, init: RequestInit): Promise<PublikResult<T>> {
-  const base = process.env.PUBLIK_API_BASE_URL;
-  const key = process.env.PUBLIK_API_KEY;
+  const base = real(process.env.PUBLIK_API_BASE_URL);
+  const key = real(process.env.PUBLIK_API_KEY);
   if (!base || !key) throw new PublikError("Publik is not configured", 503);
 
   const res = await fetch(`${base.replace(/\/$/, "")}${path}`, {
@@ -63,17 +64,32 @@ export function editImage(input: { prompt: string; images: Blob[]; size?: string
 
 export type ChatResponse = { choices: { message: { content: string } }[] };
 
+type ChatInput = { tier: "publik-fast" | "publik-balanced"; system: string; user: string; imageDataUrl?: string; json?: boolean };
+
+/** OpenAI-shaped messages; an image, when given, rides along with the user turn. */
+export function chatMessages(input: ChatInput) {
+  return [
+    { role: "system", content: input.system },
+    {
+      role: "user",
+      content: input.imageDataUrl
+        ? [
+            { type: "text", text: input.user },
+            { type: "image_url", image_url: { url: input.imageDataUrl } },
+          ]
+        : input.user,
+    },
+  ];
+}
+
 /** `tier` is a Publik tier name (publik-fast, publik-balanced), never a vendor model name. */
-export function chat(input: { tier: "publik-fast" | "publik-balanced"; system: string; user: string; json?: boolean }) {
+export function chat(input: ChatInput) {
   return call<ChatResponse>("/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: input.tier,
-      messages: [
-        { role: "system", content: input.system },
-        { role: "user", content: input.user },
-      ],
+      messages: chatMessages(input),
       ...(input.json ? { response_format: { type: "json_object" } } : {}),
     }),
   });

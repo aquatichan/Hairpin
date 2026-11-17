@@ -10,7 +10,7 @@ const assert = require("node:assert");
 const mode = process.argv[2] ?? "mock";
 const base = process.env.BASE_URL ?? "http://localhost:3000";
 const shots = process.env.SHOTS;
-const photo = path.join(__dirname, "..", "public", "looks", "0-0.jpg");
+const photo = path.join(__dirname, "..", "public", "looks", "buzz-0.jpg");
 
 (async () => {
   const browser = await chromium.launch();
@@ -19,8 +19,22 @@ const photo = path.join(__dirname, "..", "public", "looks", "0-0.jpg");
   page.on("pageerror", (e) => errors.push(e.message));
   const shot = (name) => shots && page.screenshot({ path: path.join(shots, `${name}.png`) });
 
-  // Discover -> look sheet -> Try
+  // First visit is sent through onboarding
   await page.goto(`${base}/discover`);
+  await page.waitForURL(/\/welcome/);
+  for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "wavy" }).click();
+  await shot("welcome");
+  await page.getByRole("button", { name: "Start browsing" }).click();
+  await page.waitForURL(/\/discover/);
+
+  // Search narrows the library
+  await page.getByLabel("Search cuts").fill("afro");
+  await page.getByRole("button", { name: "Open Buzz cut" }).first().waitFor({ state: "detached" });
+  assert.equal(await page.getByRole("button", { name: "Open Rounded afro" }).count(), 2);
+  await page.getByLabel("Search cuts").fill("");
+
+  // Discover -> look sheet -> Try
   await page.getByRole("button", { name: "Open Buzz cut" }).first().click();
   await shot("sheet");
   await page.getByRole("link", { name: "Try on me" }).click();
@@ -66,12 +80,30 @@ const photo = path.join(__dirname, "..", "public", "looks", "0-0.jpg");
     assert.equal(await page.getByRole("button", { name: "Delete" }).count(), 3, "1 brief + 2 renders");
     for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Delete" }).first().click();
     await page.getByRole("heading", { name: "Nothing saved yet" }).waitFor();
-    console.log("mock: discover -> photo -> render -> tweak -> brief -> export -> saved -> delete OK");
+    // Analyzer -> hands the screenshot to Try
+    await page.goto(`${base}/decode`);
+    await page.locator("input[type=file]").first().setInputFiles(photo);
+    await page.getByRole("button", { name: "Decode this cut" }).click();
+    await page.getByText("Demo mode: no AI looked at this image.").waitFor();
+    await shot("decode");
+    await page.getByRole("button", { name: "Try it on me" }).click();
+    await page.getByRole("heading", { name: "Your screenshot" }).waitFor();
+
+    // Profile: next cut countdown
+    await page.goto(`${base}/you`);
+    const d = new Date(Date.now() - 21 * 86400000);
+    await page.getByLabel("Last cut").fill(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+    await page.getByText("days to go").waitFor();
+    assert.equal(await page.locator("span.text-display").innerText(), "7");
+    await shot("you");
+    console.log("mock: welcome -> discover -> photo -> render -> tweak -> brief -> export -> saved -> delete OK");
   }
 
   await page.goto(`${base}/you`);
-  await page.getByRole("button", { name: "Delete my photo" }).click();
-  await page.getByText("No photo saved.").waitFor();
+  await page.getByRole("button", { name: "Delete all my data" }).click();
+  await page.getByRole("button", { name: "Yes, delete it all" }).click();
+  // A full wipe also resets onboarding
+  await page.waitForURL(/\/welcome/);
   assert.deepEqual(errors, [], "no uncaught page errors");
   await browser.close();
 })().catch((e) => {

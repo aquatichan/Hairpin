@@ -32,3 +32,16 @@ export const briefRequestSchema = z.object({
   tweak: z.string().trim().max(80).optional(),
   notes: z.string().trim().max(500).optional(),
 });
+
+export const decodedCutSchema = z.object({
+  styleName: z.string().trim().min(1).max(80),
+  summary: line,
+  top: line,
+  sides: line,
+  back: line,
+  texture: line,
+  upkeep: z.enum(["low", "medium", "high"]),
+  askFor: z.array(z.string().trim().max(200)).max(6),
+});
+
+export type DecodedCut = z.infer<typeof decodedCutSchema>;

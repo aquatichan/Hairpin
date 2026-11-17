@@ -1,5 +1,6 @@
 import { errorResponse, publikFailure } from "@/lib/api-error";
-import { editImage, publikConfigured, publikMock } from "@/lib/publik";
+import { aiConfigured, editImage } from "@/lib/ai";
+import { publikMock } from "@/lib/publik";
 import { verifyCaller } from "@/lib/server-auth";
 
 const MAX_BYTES = 4 * 1024 * 1024; // Publik's request body limit
@@ -39,11 +40,11 @@ export async function POST(request: Request) {
     // Demo mode: echo the photo back untouched. The client labels it as a demo.
     return new Response(photo, { headers: { "Content-Type": photo.type, "x-hairpin-mock": "1" } });
   }
-  if (!publikConfigured) return errorResponse(503, { code: "not_connected", message: "AI try-on isn't connected in this build yet." });
+  if (!aiConfigured()) return errorResponse(503, { code: "not_connected", message: "AI try-on isn't connected in this build yet." });
   if (!(await verifyCaller(request))) return errorResponse(401, { code: "signed_out", message: "Please sign in again." });
 
   try {
-    const { data, chargeMicros } = await editImage({
+    const { data, chargeMicros, provider } = await editImage({
       prompt: prompt(lookName, hasReference, tweak),
       images: hasReference ? [photo, reference] : [photo],
     });
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
     else if (first?.url) bytes = await (await fetch(first.url)).arrayBuffer();
     else return errorResponse(502, { code: "render_failed", message: "That didn't work. Please try again." });
     return new Response(bytes, {
-      headers: { "Content-Type": "image/png", ...(chargeMicros === null ? {} : { "x-hairpin-charge-micros": String(chargeMicros) }) },
+      headers: { "Content-Type": "image/png", "x-hairpin-provider": provider, ...(chargeMicros === null ? {} : { "x-hairpin-charge-micros": String(chargeMicros) }) },
     });
   } catch (e) {
     return publikFailure(e);

@@ -1,4 +1,5 @@
 import "server-only";
+import { real } from "./env";
 import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 
@@ -10,7 +11,7 @@ import { getAuth } from "firebase-admin/auth";
 export async function verifyCaller(request: Request): Promise<string | null> {
   const header = request.headers.get("authorization");
   const token = header?.startsWith("Bearer ") ? header.slice(7) : null;
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const projectId = real(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
   if (!token || !projectId) return null;
   try {
     const app = getApps()[0] ?? initializeApp({ credential: applicationDefault(), projectId });

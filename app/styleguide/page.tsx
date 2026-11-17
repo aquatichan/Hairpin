@@ -70,7 +70,7 @@ export default function Styleguide() {
       </Section>
       <Section title="Before / after">
         <div className="max-w-xs">
-          <BeforeAfter before="/looks/0-0.jpg" after="/looks/3-0.jpg" label="Compare before and after" />
+          <BeforeAfter before="/looks/buzz-0.jpg" after="/looks/afro-0.jpg" label="Compare before and after" />
         </div>
       </Section>
       <Section title="Sheet, skeleton, empty state">

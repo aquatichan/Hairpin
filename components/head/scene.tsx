@@ -1,9 +1,13 @@
 "use client";
 
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { buildHead, hairStyles } from "./geometry";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { HAIRLINE_GLSL, buildStrands, hairFragment, hairVertex } from "./hair";
+import { GROOM_SIZE, blendGroom, hairStyles } from "./styles";
+import { useTilt } from "./use-tilt";
 
 const IVORY = "#f4efe6";
 const CRIMSON = "#dc143c";
@@ -28,7 +32,7 @@ float fbm(vec2 p) {
 
 void main() {
   vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / min(uRes.x, uRes.y);
-  p += uPointer * 0.04;
+  p += uPointer * 0.05;
   float t = uTime * 0.11;
 
   // Domain-warped noise, thresholded into paint-like splotches.
@@ -52,7 +56,7 @@ void main() {
 
 const backdropVertex = /* glsl */ `void main() { gl_Position = vec4(position.xy, 1.0, 1.0); }`;
 
-type SceneProps = {
+export type SceneProps = {
   /** Lock one hairstyle instead of cycling. */
   fixedStyle?: number;
   /** Lock the head's turn (radians) instead of spinning. */
@@ -61,9 +65,13 @@ type SceneProps = {
   fixedTime?: number;
   /** Where the head sits: "hero" moves it aside for the sign-in copy. */
   framing?: "hero" | "center";
+  /** Called with the style index each time the hair starts changing. */
+  onStyle?: (index: number) => void;
 };
 
-function Backdrop({ speed, fixedTime }: { speed: number; fixedTime?: number }) {
+type Tilt = ReturnType<typeof useTilt>;
+
+function Backdrop({ speed, fixedTime, tilt }: { speed: number; fixedTime?: number; tilt: Tilt }) {
   const material = useRef<THREE.ShaderMaterial>(null);
   const uniforms = useMemo(
     () => ({ uTime: { value: fixedTime ?? 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uPointer: { value: new THREE.Vector2() } }),
@@ -74,7 +82,8 @@ function Backdrop({ speed, fixedTime }: { speed: number; fixedTime?: number }) {
     if (!u) return;
     if (fixedTime === undefined) u.uTime.value += dt * speed;
     state.gl.getDrawingBufferSize(u.uRes.value);
-    u.uPointer.value.lerp(state.pointer, 0.05);
+    const t = tilt.current;
+    u.uPointer.value.lerp(t.active ? new THREE.Vector2(t.x, -t.y) : state.pointer, 0.05);
   });
   return (
     <mesh frustumCulled={false} renderOrder={-1}>
@@ -84,64 +93,177 @@ function Backdrop({ speed, fixedTime }: { speed: number; fixedTime?: number }) {
   );
 }
 
-const CYCLE_SECONDS = 2.4;
+/** Soft studio reflections so the sculpted head has form without extra lights. */
+function Environment() {
+  const get = useThree((s) => s.get);
+  useEffect(() => {
+    const { gl, scene } = get();
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const texture = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environment = texture;
+    scene.environmentIntensity = 0.3;
+    return () => {
+      scene.environment = null;
+      texture.dispose();
+      pmrem.dispose();
+    };
+  }, [get]);
+  return null;
+}
 
-function Head({ fixedStyle, fixedTurn, framing = "hero", speed }: SceneProps & { speed: number }) {
+/** The order the hero plays styles in, chosen for contrast between neighbours. */
+const HERO_ORDER = [0, 1, 5, 3, 4, 7, 6, 8, 11, 2, 10, 9];
+const HOLD_SECONDS = 2.6;
+const MORPH_SECONDS = 1.0;
+const ease = (t: number) => t * t * (3 - 2 * t);
+
+function Head({ fixedStyle, fixedTurn, framing = "hero", speed, onStyle, tilt }: SceneProps & { speed: number; tilt: Tilt }) {
   const root = useRef<THREE.Group>(null);
   const turn = useRef<THREE.Group>(null);
-  const hair = useRef<(THREE.Mesh | null)[]>([]);
-  const head = useMemo(() => buildHead(), []);
-  const styles = useMemo(() => hairStyles.map((s) => s.build()), []);
-  const clock = useRef({ t: 0, active: fixedStyle ?? 0, sinceChange: 10, scales: hairStyles.map((_, i) => (i === (fixedStyle ?? 0) ? 1 : 0)) });
+  const hair = useRef<THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
+  const gltf = useLoader(GLTFLoader, "/models/head.glb");
+  const normalMap = useLoader(THREE.TextureLoader, "/models/head-normal.jpg");
   const viewport = useThree((s) => s.viewport);
+  const size3 = useThree((s) => s.size);
 
-  useEffect(() => () => { head.dispose(); styles.forEach((g) => g.dispose()); }, [head, styles]);
+  const headGeometry = useMemo(() => {
+    let found: THREE.BufferGeometry | null = null;
+    gltf.scene.traverse((o) => {
+      if (!found && (o as THREE.Mesh).isMesh) found = (o as THREE.Mesh).geometry;
+    });
+    return found as unknown as THREE.BufferGeometry;
+  }, [gltf]);
+
+  // Fewer strands on small or low-powered devices.
+  const strandCount = size3.width < 700 || (typeof navigator !== "undefined" && navigator.hardwareConcurrency <= 4) ? 8000 : 15000;
+  const strands = useMemo(() => buildStrands(headGeometry, strandCount), [headGeometry, strandCount]);
+  useEffect(() => () => strands.dispose(), [strands]);
+
+  const headMaterial = useMemo(() => {
+    const material = new THREE.MeshStandardMaterial({ color: "#d6cfc3", roughness: 0.58, metalness: 0, normalMap, normalScale: new THREE.Vector2(0.9, 0.9) });
+    // Shade the scalp under the hair so short cuts read as hair, not paint.
+    material.onBeforeCompile = (shader) => {
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vObj;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvObj = position;");
+      shader.fragmentShader = shader.fragmentShader
+        .replace("#include <common>", `#include <common>\nvarying vec3 vObj;\n${HAIRLINE_GLSL}`)
+        .replace(
+          "#include <color_fragment>",
+          `#include <color_fragment>
+          float grain = fract(sin(dot(floor(vObj.xz * 60.0), vec2(12.9898, 78.233))) * 43758.5453);
+          float scalp = smoothstep(-0.05, 0.07, vObj.y - hairline(vObj.z) + (grain - 0.5) * 0.09);
+          scalp *= 1.0 - step(1.6, abs(vObj.x + 0.08)) * step(vObj.y, 2.35);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.13, 0.004, 0.016), scalp * 0.94);`,
+        );
+    };
+    return material;
+  }, [normalMap]);
+
+  const hairMaterial = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        vertexShader: hairVertex,
+        fragmentShader: hairFragment,
+        side: THREE.DoubleSide,
+        uniforms: {
+          uGroom: { value: new Float32Array(GROOM_SIZE) },
+          uSweep: { value: new THREE.Vector3() },
+          uTime: { value: 0 },
+          uGrow: { value: fixedStyle === undefined ? 0 : 1 },
+        },
+      }),
+    [fixedStyle],
+  );
+  useEffect(() => () => { headMaterial.dispose(); hairMaterial.dispose(); }, [headMaterial, hairMaterial]);
+
+  const clock = useRef({ t: 0, step: 0, sinceChange: 10, drag: 0, dragging: false, lastX: 0 });
+
+  useEffect(() => {
+    document.documentElement.dataset.headReady = "1";
+    if (fixedTurn !== undefined) return;
+    const c = clock.current;
+    const down = (e: PointerEvent) => {
+      if ((e.target as HTMLElement).closest("a,button,input,label")) return;
+      c.dragging = true;
+      c.lastX = e.clientX;
+    };
+    const move = (e: PointerEvent) => {
+      if (!c.dragging) return;
+      c.drag += (e.clientX - c.lastX) * 0.012;
+      c.lastX = e.clientX;
+    };
+    const up = () => { c.dragging = false; };
+    window.addEventListener("pointerdown", down);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, [fixedTurn]);
 
   const wide = viewport.aspect > 1.15;
-  const size = framing === "center" ? Math.min(viewport.width / 3.1, viewport.height / 4.9) : wide ? viewport.height / 4.6 : Math.min(viewport.width / 4.4, viewport.height / 8.5);
+  const size = framing === "center" ? Math.min(viewport.width / 3.3, viewport.height / 4.6) : wide ? viewport.height / 4.4 : Math.min(viewport.width / 3.4, viewport.height / 7.6);
   const x = framing === "hero" && wide ? viewport.width * 0.2 : 0;
-  const y = framing === "center" ? 0 : wide ? -size * 0.2 : viewport.height * 0.2;
+  const y = framing === "center" ? size * 0.35 : wide ? size * 0.1 : viewport.height * 0.2;
 
   useFrame((state, rawDt) => {
     const dt = Math.min(rawDt, 0.05) * speed;
     const c = clock.current;
     c.t += dt;
     c.sinceChange += dt;
-    if (fixedStyle === undefined) {
-      const next = Math.floor(c.t / CYCLE_SECONDS) % hairStyles.length;
-      if (next !== c.active) { c.active = next; c.sinceChange = 0; }
+    if (!hair.current) return;
+    const u = hair.current.material.uniforms;
+    u.uTime.value = c.t;
+    u.uGrow.value = Math.min(1, u.uGrow.value + dt * 1.4);
+
+    if (fixedStyle !== undefined) {
+      const groom = hairStyles[fixedStyle % hairStyles.length].groom;
+      blendGroom(groom, groom, 0, u.uGroom.value, u.uSweep.value);
+    } else {
+      const step = Math.floor(c.t / HOLD_SECONDS);
+      if (step !== c.step) {
+        c.step = step;
+        c.sinceChange = 0;
+        onStyle?.(HERO_ORDER[step % HERO_ORDER.length]);
+      }
+      const from = hairStyles[HERO_ORDER[(c.step + HERO_ORDER.length - 1) % HERO_ORDER.length]].groom;
+      const to = hairStyles[HERO_ORDER[c.step % HERO_ORDER.length]].groom;
+      const mix = c.step === 0 ? 1 : ease(Math.min(1, c.sinceChange / MORPH_SECONDS));
+      blendGroom(from, to, mix, u.uGroom.value, u.uSweep.value);
     }
-    hairStyles.forEach((_, i) => {
-      const target = i === c.active ? 1 : 0;
-      c.scales[i] += (target - c.scales[i]) * (1 - Math.exp(-11 * dt));
-      const mesh = hair.current[i];
-      if (!mesh) return;
-      mesh.visible = c.scales[i] > 0.02;
-      // A small overshoot as the new cut grows out of the scalp.
-      mesh.scale.setScalar(c.scales[i] * (1 + 0.12 * Math.sin(Math.PI * Math.min(1, c.sinceChange * 2.2)) * target));
-    });
+
     if (turn.current) {
       if (fixedTurn !== undefined) turn.current.rotation.y = fixedTurn;
-      else turn.current.rotation.y += dt * (0.55 + 5.5 * Math.exp(-3.2 * c.sinceChange));
+      else {
+        // Slow turn, a quick spin as the cut changes, plus whatever the finger adds.
+        if (!c.dragging) turn.current.rotation.y += dt * (0.45 + 4.2 * Math.exp(-3.0 * c.sinceChange));
+        turn.current.rotation.y += c.drag;
+        c.drag = 0;
+      }
     }
     if (root.current) {
-      root.current.position.y = y + Math.sin(c.t * 0.9) * size * 0.06;
-      root.current.rotation.x += (-state.pointer.y * 0.18 - root.current.rotation.x) * 0.06;
-      root.current.rotation.z += (-state.pointer.x * 0.06 - root.current.rotation.z) * 0.06;
+      const t = tilt.current;
+      const px = t.active ? t.x : state.pointer.x;
+      const py = t.active ? -t.y : state.pointer.y;
+      root.current.position.y = y + Math.sin(c.t * 0.9) * size * 0.04;
+      root.current.rotation.x += (-py * 0.2 - root.current.rotation.x) * 0.06;
+      root.current.rotation.z += (-px * 0.07 - root.current.rotation.z) * 0.06;
+      if (fixedTurn === undefined) root.current.rotation.y += (px * 0.35 - root.current.rotation.y) * 0.06;
     }
   });
 
   return (
     <group ref={root} position={[x, y, 0]} scale={size}>
       <group ref={turn}>
-        <mesh geometry={head}>
-          <meshStandardMaterial color="#d9d3c8" roughness={0.82} metalness={0.05} flatShading />
-        </mesh>
-        {styles.map((geometry, i) => (
-          <mesh key={hairStyles[i].id} geometry={geometry} ref={(m) => { hair.current[i] = m; }} visible={false}>
-            <meshStandardMaterial color={CRIMSON} roughness={0.55} metalness={0.1} flatShading side={THREE.DoubleSide} />
-          </mesh>
-        ))}
+        <group scale={0.5} position={[0.04, -0.95, -0.05]}>
+          <mesh geometry={headGeometry} material={headMaterial} />
+          <mesh ref={hair} geometry={strands} material={hairMaterial} frustumCulled={false} />
+        </group>
       </group>
     </group>
   );
@@ -149,6 +271,7 @@ function Head({ fixedStyle, fixedTurn, framing = "hero", speed }: SceneProps & {
 
 export default function HeadScene(props: SceneProps) {
   const [speed, setSpeed] = useState(1);
+  const tilt = useTilt();
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
     const apply = () => setSpeed(query.matches ? 0.2 : 1);
@@ -159,12 +282,15 @@ export default function HeadScene(props: SceneProps) {
 
   return (
     <Canvas dpr={[1, 1.75]} camera={{ fov: 32, position: [0, 0, 10] }} gl={{ antialias: true, powerPreference: "high-performance" }} eventSource={typeof document === "undefined" ? undefined : document.body} eventPrefix="client">
-      <Backdrop speed={speed} fixedTime={props.fixedTime} />
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[-3, 5, 6]} intensity={2.2} color={IVORY} />
-      <directionalLight position={[5, 1, -4]} intensity={2.4} color={CRIMSON} />
-      <directionalLight position={[-5, -2, -3]} intensity={0.6} color="#8a8a92" />
-      <Head {...props} speed={speed} />
+      <Backdrop speed={speed} fixedTime={props.fixedTime} tilt={tilt} />
+      <Environment />
+      <ambientLight intensity={0.15} />
+      <directionalLight position={[-3, 5, 6]} intensity={2.4} color={IVORY} />
+      <directionalLight position={[5, 1, -4]} intensity={3.2} color={CRIMSON} />
+      <directionalLight position={[-5, -2, -3]} intensity={0.5} color="#8a8a92" />
+      <Suspense fallback={null}>
+        <Head {...props} speed={speed} tilt={tilt} />
+      </Suspense>
     </Canvas>
   );
 }

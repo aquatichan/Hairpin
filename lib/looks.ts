@@ -1,10 +1,11 @@
-import { hairStyles } from "@/components/head/geometry";
+import { hairStyles } from "@/components/head/styles";
 
 export type Look = {
   id: string;
   name: string;
   length: "short" | "medium" | "long";
   texture: "straight" | "wavy" | "curly" | "coily";
+  notes: string;
   image: string;
   /** Height divided by width, so tiles reserve their space before the image loads. */
   ratio: number;
@@ -23,7 +24,8 @@ export const previewLooks: Look[] = [0, 1].flatMap((view) =>
     name: style.name,
     length: style.length,
     texture: style.texture,
-    image: `/looks/${i}-${view}.jpg`,
+    notes: style.notes,
+    image: `/looks/${style.id}-${view}.jpg`,
     ratio: RATIOS[(i + view * 2) % RATIOS.length],
   })),
 );

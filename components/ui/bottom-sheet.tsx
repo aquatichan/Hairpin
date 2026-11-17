@@ -22,7 +22,7 @@ export function BottomSheet({ open, onClose, label, children }: { open: boolean;
       aria-label={label}
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
-      className="m-0 mt-auto max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-card border border-hairline bg-graphite p-0 text-ivory backdrop:bg-onyx/80 lg:m-auto lg:max-w-md lg:rounded-card"
+      className="m-0 mt-auto max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-card border border-hairline bg-graphite p-0 text-ivory backdrop:bg-onyx/80 open:animate-sheet backdrop:animate-fade lg:m-auto lg:max-w-md lg:rounded-card"
     >
       {open && <div className="flex flex-col gap-4 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>}
     </dialog>

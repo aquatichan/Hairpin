@@ -16,6 +16,9 @@ export const DiscoverIcon = () => (
 export const TryIcon = () => (
   <svg {...base}><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="M8.5 7.5 21 18M8.5 16.5 21 6" /></svg>
 );
+export const DecodeIcon = () => (
+  <svg {...base}><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2" /><path d="M12 8.5 13 11l2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1 1-2.5Z" /></svg>
+);
 export const SavedIcon = () => (
   <svg {...base}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1Z" /></svg>
 );
