@@ -1,12 +1,12 @@
 import "server-only";
 import { real } from "./env";
-import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
+import { getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 
 /**
  * Returns the caller's Firebase uid, or null if the request carries no valid
- * ID token. Uses Application Default Credentials, which Firebase App Hosting
- * provides; locally, run `gcloud auth application-default login`.
+ * ID token. Checking a token only needs the project id and Google's public
+ * signing keys, so no service account has to be given to the host.
  */
 export async function verifyCaller(request: Request): Promise<string | null> {
   const header = request.headers.get("authorization");
@@ -14,7 +14,7 @@ export async function verifyCaller(request: Request): Promise<string | null> {
   const projectId = real(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
   if (!token || !projectId) return null;
   try {
-    const app = getApps()[0] ?? initializeApp({ credential: applicationDefault(), projectId });
+    const app = getApps()[0] ?? initializeApp({ projectId });
     return (await getAuth(app).verifyIdToken(token)).uid;
   } catch {
     return null;
