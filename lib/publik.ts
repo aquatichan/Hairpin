@@ -38,6 +38,9 @@ async function call<T>(path: string, init: RequestInit): Promise<PublikResult<T>
   return { data: body as T, chargeMicros: charge ? Number(charge) : null };
 }
 
+/** Demo mode for local development: no Publik call is made and the UI labels every result as a demo. */
+export const publikMock = process.env.PUBLIK_MOCK === "1" && process.env.NODE_ENV !== "production";
+
 export type ImageResponse = { data: { url?: string; b64_json?: string }[] };
 
 export function generateImage(input: { prompt: string; size?: string; model?: string }) {
@@ -56,4 +59,22 @@ export function editImage(input: { prompt: string; images: Blob[]; size?: string
   if (input.model) form.set("model", input.model);
   for (const image of input.images) form.append("image[]", image);
   return call<ImageResponse>("/images/edits", { method: "POST", body: form });
+}
+
+export type ChatResponse = { choices: { message: { content: string } }[] };
+
+/** `tier` is a Publik tier name (publik-fast, publik-balanced), never a vendor model name. */
+export function chat(input: { tier: "publik-fast" | "publik-balanced"; system: string; user: string; json?: boolean }) {
+  return call<ChatResponse>("/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: input.tier,
+      messages: [
+        { role: "system", content: input.system },
+        { role: "user", content: input.user },
+      ],
+      ...(input.json ? { response_format: { type: "json_object" } } : {}),
+    }),
+  });
 }
