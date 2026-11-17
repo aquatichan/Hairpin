@@ -155,11 +155,12 @@ function Head({ fixedStyle, fixedTurn, framing = "hero", speed, onStyle, tilt, p
   const headMaterial = useMemo(() => {
     // The colour map is sRGB. These maps ship with the scan, which expects the default flipY.
 
-    colorMap.colorSpace = THREE.SRGBColorSpace;
+    const skin = colorMap.clone();
+    skin.colorSpace = THREE.SRGBColorSpace;
 
     const hair = palettes[palette].hair;
     const material = new THREE.MeshPhysicalMaterial({
-      map: colorMap,
+      map: skin,
       roughness: 0.52,
       metalness: 0,
       normalMap,
