@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Look } from "@/lib/looks";
+import { useProfile } from "@/lib/profile";
 import { BottomSheet } from "./ui/bottom-sheet";
 import { buttonClass } from "./ui/button";
 import { Chip } from "./ui/chip";
@@ -15,6 +16,12 @@ export function Masonry({ looks }: { looks: Look[] }) {
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
   const [open, setOpen] = useState<Look | null>(null);
   const [query, setQuery] = useState("");
+  const profile = useProfile();
+  const tryHref = (look: Look) => {
+    const target = `/try?look=${look.id}`;
+    // The first time someone goes to try a look, the short intro runs first.
+    return profile && profile.onboardedAt === null ? `/welcome?next=${encodeURIComponent(target)}` : target;
+  };
   const shown = useMemo(() => {
     const f = filter.toLowerCase();
     const q = query.trim().toLowerCase();
@@ -61,9 +68,21 @@ export function Masonry({ looks }: { looks: Look[] }) {
               <p className="text-caption tracking-widest text-stone uppercase">
                 {open.length} · {open.texture}
               </p>
-              <p className="pt-2 text-body text-stone">{open.notes}</p>
+              {open.notes && <p className="pt-2 text-body text-stone">{open.notes}</p>}
+              {open.credit && (
+                <p className="pt-2 text-caption text-stone">
+                  Photo:{" "}
+                  {open.creditUrl ? (
+                    <a href={open.creditUrl} target="_blank" rel="noreferrer" className="underline underline-offset-4 hover:text-ivory">
+                      {open.credit}
+                    </a>
+                  ) : (
+                    open.credit
+                  )}
+                </p>
+              )}
             </div>
-            <Link href={`/try?look=${open.id}`} onClick={() => setOpen(null)} className={buttonClass("primary")}>
+            <Link href={tryHref(open)} onClick={() => setOpen(null)} className={buttonClass("primary")}>
               Try on me
             </Link>
           </>

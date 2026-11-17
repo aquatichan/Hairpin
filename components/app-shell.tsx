@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useProfile } from "@/lib/profile";
 import { useAuth } from "./auth-provider";
 import { DecodeIcon, DiscoverIcon, SavedIcon, TryIcon, YouIcon } from "./ui/icons";
 
@@ -20,16 +19,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const profile = useProfile();
-  const needsWelcome = profile !== null && profile.onboardedAt === null;
-
   useEffect(() => {
     if (status === "signed-out") router.replace("/");
-    else if (status !== "loading" && needsWelcome) router.replace("/welcome");
-  }, [status, needsWelcome, router]);
+  }, [status, router]);
 
-  // While sign-in and onboarding state resolve, the shell stays mounted but hidden, so the page is always rendered.
-  const gated = status === "loading" || status === "signed-out" || profile === null || needsWelcome;
+  // While sign-in state resolves, the shell stays mounted but hidden, so the page is always rendered.
+  const gated = status === "loading" || status === "signed-out";
 
   return (
     <div className={`flex flex-1 flex-col lg:flex-row ${gated ? "invisible" : "animate-fade"}`} aria-hidden={gated || undefined}>

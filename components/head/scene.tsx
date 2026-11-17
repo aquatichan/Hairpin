@@ -5,18 +5,21 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { palettes, type PaletteName } from "./palettes";
 import { HAIRLINE_GLSL, buildStrands, hairFragment, hairVertex } from "./hair";
 import { GROOM_SIZE, blendGroom, hairStyles } from "./styles";
 import { useTilt } from "./use-tilt";
 
 const IVORY = "#f4efe6";
-const CRIMSON = "#dc143c";
 
 const backdropFragment = /* glsl */ `
 precision highp float;
 uniform float uTime;
 uniform vec2 uRes;
 uniform vec2 uPointer;
+uniform vec3 uAccentDark;
+uniform vec3 uAccentLight;
+uniform float uAccentOn;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -45,9 +48,9 @@ void main() {
   col = mix(col, vec3(0.086, 0.086, 0.094), smoothstep(0.42, 0.44, g));
   col = mix(col, vec3(0.16, 0.16, 0.17), smoothstep(0.55, 0.565, g));
   col = mix(col, vec3(0.30, 0.30, 0.31), smoothstep(0.66, 0.67, g2) * smoothstep(0.5, 0.56, g));
-  float crim = smoothstep(0.545, 0.555, c);
-  vec3 crimson = mix(vec3(0.45, 0.03, 0.10), vec3(0.863, 0.078, 0.235), smoothstep(0.55, 0.7, c));
-  col = mix(col, crimson, crim);
+  float crim = smoothstep(0.545, 0.555, c) * uAccentOn;
+  vec3 accent = mix(uAccentDark, uAccentLight, smoothstep(0.55, 0.7, c));
+  col = mix(col, accent, crim);
 
   col *= 1.0 - 0.55 * smoothstep(0.35, 1.15, length(p));
   col += (hash(gl_FragCoord.xy + fract(uTime) * 100.0) - 0.5) * 0.035;
@@ -65,18 +68,27 @@ export type SceneProps = {
   fixedTime?: number;
   /** Where the head sits: "hero" moves it aside for the sign-in copy. */
   framing?: "hero" | "center";
+  /** Colour treatment for the hair, light and backdrop. */
+  palette?: PaletteName;
   /** Called with the style index each time the hair starts changing. */
   onStyle?: (index: number) => void;
 };
 
 type Tilt = ReturnType<typeof useTilt>;
 
-function Backdrop({ speed, fixedTime, tilt }: { speed: number; fixedTime?: number; tilt: Tilt }) {
+function Backdrop({ speed, fixedTime, tilt, palette }: { speed: number; fixedTime?: number; tilt: Tilt; palette: PaletteName }) {
   const material = useRef<THREE.ShaderMaterial>(null);
-  const uniforms = useMemo(
-    () => ({ uTime: { value: fixedTime ?? 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uPointer: { value: new THREE.Vector2() } }),
-    [fixedTime],
-  );
+  const uniforms = useMemo(() => {
+    const accent = palettes[palette].accent;
+    return {
+      uTime: { value: fixedTime ?? 0 },
+      uRes: { value: new THREE.Vector2(1, 1) },
+      uPointer: { value: new THREE.Vector2() },
+      uAccentDark: { value: new THREE.Vector3(...(accent?.dark ?? [0, 0, 0])) },
+      uAccentLight: { value: new THREE.Vector3(...(accent?.light ?? [0, 0, 0])) },
+      uAccentOn: { value: accent ? 1 : 0 },
+    };
+  }, [fixedTime, palette]);
   useFrame((state, dt) => {
     const u = material.current?.uniforms;
     if (!u) return;
@@ -117,12 +129,13 @@ const HOLD_SECONDS = 2.6;
 const MORPH_SECONDS = 1.0;
 const ease = (t: number) => t * t * (3 - 2 * t);
 
-function Head({ fixedStyle, fixedTurn, framing = "hero", speed, onStyle, tilt }: SceneProps & { speed: number; tilt: Tilt }) {
+function Head({ fixedStyle, fixedTurn, framing = "hero", speed, onStyle, tilt, palette = "oxblood" }: SceneProps & { speed: number; tilt: Tilt }) {
   const root = useRef<THREE.Group>(null);
   const turn = useRef<THREE.Group>(null);
   const hair = useRef<THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
   const gltf = useLoader(GLTFLoader, "/models/head.glb");
   const normalMap = useLoader(THREE.TextureLoader, "/models/head-normal.jpg");
+  const colorMap = useLoader(THREE.TextureLoader, "/models/head-color.jpg");
   const viewport = useThree((s) => s.viewport);
   const size3 = useThree((s) => s.size);
 
@@ -140,7 +153,22 @@ function Head({ fixedStyle, fixedTurn, framing = "hero", speed, onStyle, tilt }:
   useEffect(() => () => strands.dispose(), [strands]);
 
   const headMaterial = useMemo(() => {
-    const material = new THREE.MeshStandardMaterial({ color: "#d6cfc3", roughness: 0.58, metalness: 0, normalMap, normalScale: new THREE.Vector2(0.9, 0.9) });
+    // The colour map is sRGB. These maps ship with the scan, which expects the default flipY.
+
+    colorMap.colorSpace = THREE.SRGBColorSpace;
+
+    const hair = palettes[palette].hair;
+    const material = new THREE.MeshPhysicalMaterial({
+      map: colorMap,
+      roughness: 0.52,
+      metalness: 0,
+      normalMap,
+      normalScale: new THREE.Vector2(0.8, 0.8),
+      // A touch of sheen stands in for skin's soft, fuzzy reflection.
+      sheen: 0.35,
+      sheenRoughness: 0.6,
+      sheenColor: new THREE.Color("#ffd9c4"),
+    });
     // Shade the scalp under the hair so short cuts read as hair, not paint.
     material.onBeforeCompile = (shader) => {
       shader.vertexShader = shader.vertexShader
@@ -154,11 +182,11 @@ function Head({ fixedStyle, fixedTurn, framing = "hero", speed, onStyle, tilt }:
           float grain = fract(sin(dot(floor(vObj.xz * 60.0), vec2(12.9898, 78.233))) * 43758.5453);
           float scalp = smoothstep(-0.05, 0.07, vObj.y - hairline(vObj.z) + (grain - 0.5) * 0.09);
           scalp *= 1.0 - step(1.6, abs(vObj.x + 0.08)) * step(vObj.y, 2.35);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.13, 0.004, 0.016), scalp * 0.94);`,
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(${hair.map((v) => (v * 0.8).toFixed(4)).join(", ")}), scalp * 0.9);`,
         );
     };
     return material;
-  }, [normalMap]);
+  }, [normalMap, colorMap, palette]);
 
   const hairMaterial = useMemo(
     () =>
@@ -171,9 +199,11 @@ function Head({ fixedStyle, fixedTurn, framing = "hero", speed, onStyle, tilt }:
           uSweep: { value: new THREE.Vector3() },
           uTime: { value: 0 },
           uGrow: { value: fixedStyle === undefined ? 0 : 1 },
+          uHair: { value: new THREE.Vector3(...palettes[palette].hair) },
+          uHighlight: { value: new THREE.Vector3(...palettes[palette].highlight) },
         },
       }),
-    [fixedStyle],
+    [fixedStyle, palette],
   );
   useEffect(() => () => { headMaterial.dispose(); hairMaterial.dispose(); }, [headMaterial, hairMaterial]);
 
@@ -282,11 +312,11 @@ export default function HeadScene(props: SceneProps) {
 
   return (
     <Canvas dpr={[1, 1.75]} camera={{ fov: 32, position: [0, 0, 10] }} gl={{ antialias: true, powerPreference: "high-performance" }} eventSource={typeof document === "undefined" ? undefined : document.body} eventPrefix="client">
-      <Backdrop speed={speed} fixedTime={props.fixedTime} tilt={tilt} />
+      <Backdrop speed={speed} fixedTime={props.fixedTime} tilt={tilt} palette={props.palette ?? "oxblood"} />
       <Environment />
       <ambientLight intensity={0.15} />
       <directionalLight position={[-3, 5, 6]} intensity={2.4} color={IVORY} />
-      <directionalLight position={[5, 1, -4]} intensity={3.2} color={CRIMSON} />
+      <directionalLight position={[5, 1, -4]} intensity={2.4} color={palettes[props.palette ?? "oxblood"].rimLight} />
       <directionalLight position={[-5, -2, -3]} intensity={0.5} color="#8a8a92" />
       <Suspense fallback={null}>
         <Head {...props} speed={speed} tilt={tilt} />

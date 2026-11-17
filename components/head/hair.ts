@@ -192,6 +192,8 @@ void main() {
 }`;
 
 export const hairFragment = /* glsl */ `
+uniform vec3 uHair;
+uniform vec3 uHighlight;
 varying vec3 vTangent;
 varying vec3 vRootNormal;
 varying vec3 vWorld;
@@ -205,7 +207,7 @@ void main() {
   vec3 key = normalize(vec3(-3.0, 5.0, 6.0));
   vec3 rim = normalize(vec3(5.0, 1.0, -4.0));
 
-  vec3 base = vec3(0.36, 0.003, 0.024) * vShade;
+  vec3 base = uHair * vShade;
   float wrap = clamp(dot(N, key) * 0.6 + 0.4, 0.0, 1.0);
   float occlusion = mix(0.2, 1.0, smoothstep(0.0, 0.6, vT));
   vec3 col = base * (0.12 + 1.1 * wrap * wrap) * occlusion;
@@ -213,10 +215,12 @@ void main() {
   // Kajiya-Kay strand highlights.
   vec3 H = normalize(key + V);
   float th = dot(T, H);
-  col += vec3(1.0, 0.5, 0.5) * pow(sqrt(max(0.0, 1.0 - th * th)), 80.0) * 0.16 * wrap * occlusion;
+  col += uHighlight * pow(sqrt(max(0.0, 1.0 - th * th)), 80.0) * 0.16 * wrap * occlusion;
+  // Secondary, softer highlight tinted by the hair itself.
+  col += uHair * 2.5 * pow(sqrt(max(0.0, 1.0 - th * th)), 12.0) * 0.25 * wrap * occlusion;
   vec3 H2 = normalize(rim + V);
   float th2 = dot(T, H2);
-  col += vec3(1.0, 0.12, 0.2) * pow(sqrt(max(0.0, 1.0 - th2 * th2)), 18.0) * 0.3 * clamp(dot(N, rim) * 0.5 + 0.5, 0.0, 1.0);
+  col += uHighlight * pow(sqrt(max(0.0, 1.0 - th2 * th2)), 18.0) * 0.3 * clamp(dot(N, rim) * 0.5 + 0.5, 0.0, 1.0);
 
   gl_FragColor = vec4(col, 1.0);
   #include <tonemapping_fragment>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "./auth-provider";
-import { Button } from "./ui/button";
+import { Button, buttonClass } from "./ui/button";
 import { GoogleIcon } from "./ui/icons";
 
 export function SignIn() {
@@ -31,17 +31,18 @@ export function SignIn() {
 
   return (
     <div className="flex flex-col items-start gap-3">
-      <Button variant="secondary" onClick={onClick} disabled={busy || status === "unconfigured" || status === "loading"}>
-        <GoogleIcon />
-        Continue with Google
-      </Button>
-      {status === "unconfigured" && (
-        <p className="text-caption text-stone">
-          Sign-in isn&apos;t connected in this build yet.{" "}
-          <Link href="/discover" className="text-ivory underline underline-offset-4">
-            Preview the app
+      {status === "unconfigured" ? (
+        <>
+          <Link href="/discover" className={buttonClass("secondary")}>
+            Browse the hair library
           </Link>
-        </p>
+          <p className="text-caption text-stone">Preview build: Google sign-in isn&apos;t connected yet.</p>
+        </>
+      ) : (
+        <Button variant="secondary" onClick={onClick} disabled={busy || status === "loading"}>
+          <GoogleIcon />
+          Continue with Google
+        </Button>
       )}
       {error && <p role="alert" className="text-caption text-ivory">{error}</p>}
     </div>

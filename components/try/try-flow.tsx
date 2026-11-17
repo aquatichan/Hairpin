@@ -8,7 +8,7 @@ import { resizeToJpeg } from "@/lib/image";
 import { localStore, type StoredRender } from "@/lib/local-store";
 import { takePendingReference } from "@/lib/handoff";
 import { requestRender } from "@/lib/tryon-client";
-import { previewLooks } from "@/lib/looks";
+import { libraryLooks } from "@/lib/looks";
 import { useBlobUrl, useLocal } from "@/lib/use-local";
 import { BeforeAfter } from "../ui/before-after";
 import { BlobImage } from "../ui/blob-image";
@@ -22,7 +22,7 @@ const TWEAKS = ["Shorter", "Longer", "More volume", "Curtain fringe", "Lower fad
 
 export function TryFlow() {
   const lookId = useSearchParams().get("look");
-  const look = previewLooks.find((l) => l.id === lookId) ?? null;
+  const look = libraryLooks.find((l) => l.id === lookId) ?? null;
   const photo = useLocal(() => localStore.get("photo", "active").then((p) => p ?? null), "photo");
   const photoUrl = useBlobUrl(photo?.blob);
 

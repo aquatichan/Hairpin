@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { HeroCanvas } from "@/components/head/hero-canvas";
 import { Button } from "@/components/ui/button";
 import { ChoiceRow } from "@/components/ui/choice-row";
@@ -17,8 +17,9 @@ const steps = [
   { title: "Show your barber.", body: "Turn the one you like into a Barber Brief: clear instructions, no guesswork." },
 ];
 
-export default function Welcome() {
+function Welcome() {
   const router = useRouter();
+  const next = useSearchParams().get("next");
   const profile = useProfile();
   const [step, setStep] = useState(0);
   const [length, setLength] = useState<Profile["length"]>(null);
@@ -27,7 +28,8 @@ export default function Welcome() {
 
   function finish() {
     saveProfile({ onboardedAt: Date.now(), length: length ?? profile?.length ?? null, texture: texture ?? profile?.texture ?? null });
-    router.replace("/discover");
+    // Only same-site paths, so the link can never send someone off the app.
+    router.replace(next?.startsWith("/") && !next.startsWith("//") ? next : "/discover");
   }
 
   return (
@@ -67,10 +69,18 @@ export default function Welcome() {
             </Button>
           )}
           <Button className="flex-1" onClick={() => (last ? finish() : setStep(step + 1))}>
-            {last ? "Start browsing" : "Next"}
+            {last ? (next ? "Let's try it" : "Start browsing") : "Next"}
           </Button>
         </div>
       </div>
     </main>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense>
+      <Welcome />
+    </Suspense>
   );
 }
