@@ -19,12 +19,15 @@ export class PublikError extends Error {
 
 export type PublikResult<T> = { data: T; chargeMicros: number | null };
 
-export const publikConfigured = Boolean(real(process.env.PUBLIK_API_BASE_URL) && real(process.env.PUBLIK_API_KEY));
+/** The public Publik endpoint; PUBLIK_API_BASE_URL only needs setting to point somewhere else. */
+const baseUrl = () => real(process.env.PUBLIK_API_BASE_URL) ?? "https://publikhq.com/api/v1";
+
+export const publikConfigured = Boolean(real(process.env.PUBLIK_API_KEY));
 
 async function call<T>(path: string, init: RequestInit): Promise<PublikResult<T>> {
-  const base = real(process.env.PUBLIK_API_BASE_URL);
+  const base = baseUrl();
   const key = real(process.env.PUBLIK_API_KEY);
-  if (!base || !key) throw new PublikError("Publik is not configured", 503);
+  if (!key) throw new PublikError("Publik is not configured", 503);
 
   const res = await fetch(`${base.replace(/\/$/, "")}${path}`, {
     ...init,

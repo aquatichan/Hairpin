@@ -53,7 +53,8 @@ export async function POST(request: Request) {
     if (first?.b64_json) bytes = Uint8Array.from(Buffer.from(first.b64_json, "base64")).buffer;
     else if (first?.url) bytes = await (await fetch(first.url)).arrayBuffer();
     else return errorResponse(502, { code: "render_failed", message: "That didn't work. Please try again." });
-    return new Response(bytes, {
+    // Streamed, because hosts such as Vercel cap a buffered response at 4.5 MB and a PNG render can pass that.
+    return new Response(new Blob([bytes]).stream(), {
       headers: { "Content-Type": "image/png", "x-hairpin-provider": provider, ...(chargeMicros === null ? {} : { "x-hairpin-charge-micros": String(chargeMicros) }) },
     });
   } catch (e) {
