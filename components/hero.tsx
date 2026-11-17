@@ -2,6 +2,7 @@ import { libraryLooks } from "@/lib/looks";
 import { HeroVideo } from "./hero-video";
 import { TiltedMarquee } from "./marquee";
 import { SignIn } from "./sign-in";
+import { Logo } from "./ui/logo";
 import { RevealText } from "./ui/reveal-text";
 
 export function Hero() {
@@ -14,7 +15,7 @@ export function Hero() {
       <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-onyx via-onyx/60 to-transparent lg:bg-linear-to-r lg:via-onyx/40" aria-hidden />
 
       <header className="relative animate-fade p-6 lg:px-12 lg:pt-12">
-        <p className="font-serif text-title">Hairpin</p>
+        <Logo />
       </header>
       <div className="pointer-events-none relative mt-auto flex max-w-xl flex-col items-start gap-6 p-6 lg:my-auto lg:p-12">
         <p className="animate-fade text-caption tracking-widest text-champagne uppercase">Your next cut, first</p>

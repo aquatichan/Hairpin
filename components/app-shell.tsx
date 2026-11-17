@@ -1,5 +1,6 @@
 "use client";
 
+import { Logo } from "./ui/logo";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -32,8 +33,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         aria-label="Primary"
         className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-hairline bg-onyx px-2 pb-[env(safe-area-inset-bottom)] lg:sticky lg:top-0 lg:h-dvh lg:w-56 lg:shrink-0 lg:flex-col lg:justify-start lg:gap-2 lg:border-t-0 lg:border-r lg:p-6"
       >
-        <Link href="/discover" className="hidden pb-6 font-serif text-title lg:block">
-          Hairpin
+        <Link href="/discover" className="hidden pb-6 lg:block">
+          <Logo />
         </Link>
         {tabs.map(({ href, label, Icon }) => {
           const active = pathname.startsWith(href);
