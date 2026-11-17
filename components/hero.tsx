@@ -1,26 +1,27 @@
 import { libraryLooks } from "@/lib/looks";
-import { Marquee } from "./marquee";
+import { HeroVideo } from "./hero-video";
+import { TiltedMarquee } from "./marquee";
 import { SignIn } from "./sign-in";
 import { RevealText } from "./ui/reveal-text";
 
 export function Hero() {
   return (
     <main className="relative flex min-h-dvh flex-1 flex-col overflow-hidden bg-onyx">
-      <header className="animate-fade p-6 lg:px-12 lg:pt-12">
+      <HeroVideo />
+      <section aria-label="Haircuts in the library" className="absolute inset-0 animate-fade lg:left-1/3" style={{ animationDuration: "1.6s" }}>
+        <TiltedMarquee looks={libraryLooks} />
+      </section>
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-onyx via-onyx/60 to-transparent lg:bg-linear-to-r lg:via-onyx/40" aria-hidden />
+
+      <header className="relative animate-fade p-6 lg:px-12 lg:pt-12">
         <p className="font-serif text-title">Hairpin</p>
       </header>
-
-      <section aria-label="Haircuts in the library" className="flex flex-1 animate-fade flex-col justify-center gap-3 py-6 [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]">
-        <Marquee looks={libraryLooks} duration={90} />
-        <Marquee looks={libraryLooks} offset={4} duration={70} reverse tone="champagne" />
-        <Marquee looks={libraryLooks} offset={8} duration={110} />
-      </section>
-
-      <div className="flex max-w-xl flex-col items-start gap-6 p-6 lg:p-12">
+      <div className="pointer-events-none relative mt-auto flex max-w-xl flex-col items-start gap-6 p-6 lg:my-auto lg:p-12">
+        <p className="animate-fade text-caption tracking-widest text-champagne uppercase">Your next cut, first</p>
         <h1 className="font-serif text-display text-balance">
           <RevealText text="Try any cut on you before you sit in the chair." delay={150} />
         </h1>
-        <div className="animate-rise" style={{ animationDelay: "900ms" }}>
+        <div className="pointer-events-auto animate-rise" style={{ animationDelay: "900ms" }}>
           <SignIn />
         </div>
       </div>
