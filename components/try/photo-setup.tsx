@@ -51,7 +51,7 @@ export function PhotoSetup() {
         </label>
       </div>
       <label className="flex items-start gap-3 text-body">
-        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 size-4 accent-crimson" />
+        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 size-4 accent-champagne" />
         My photo is sent to an AI provider to make previews. It stays private and I can delete it anytime.
       </label>
       {error && <Notice tone="error">{error}</Notice>}

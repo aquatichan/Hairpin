@@ -30,6 +30,8 @@ export function Masonry({ looks }: { looks: Look[] }) {
 
   return (
     <div className="flex flex-col gap-4 px-2 py-4 lg:px-8 lg:py-6">
+      {looks.length > 0 && (
+      <>
       <label className="mx-2 flex h-12 items-center gap-3 rounded-full bg-graphite px-4 text-stone focus-within:text-ivory lg:mx-0 lg:max-w-md">
         <SearchIcon />
         <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search cuts" aria-label="Search cuts" className="h-full min-w-0 flex-1 bg-transparent text-body text-ivory placeholder:text-stone focus:outline-none" />
@@ -41,6 +43,8 @@ export function Masonry({ looks }: { looks: Look[] }) {
           </Chip>
         ))}
       </div>
+      </>
+      )}
       {/* CSS columns give the staggered masonry flow with no layout script. */}
       <ul className="columns-2 gap-2 md:columns-3 lg:gap-4 xl:columns-4 2xl:columns-5">
         {shown.map((look, i) => (
@@ -88,7 +92,37 @@ export function Masonry({ looks }: { looks: Look[] }) {
           </>
         )}
       </BottomSheet>
-      {shown.length === 0 && <p className="px-2 py-12 text-center text-body text-stone">No looks match that filter yet.</p>}
+      {looks.length === 0 ? (
+        <LibraryComingSoon />
+      ) : (
+        shown.length === 0 && <p className="px-2 py-12 text-center text-body text-stone">No looks match that filter yet.</p>
+      )}
+    </div>
+  );
+}
+
+const PLACEHOLDER_RATIOS = [1.3, 1.6, 1.1, 1.45, 1.25, 1.55, 1.15, 1.4];
+
+/** Shown until real photos are added: the shape of the gallery, honestly labelled. */
+function LibraryComingSoon() {
+  return (
+    <div className="relative">
+      <ul className="columns-2 gap-2 md:columns-3 lg:gap-4 xl:columns-4 2xl:columns-5" aria-hidden>
+        {PLACEHOLDER_RATIOS.concat(PLACEHOLDER_RATIOS).map((ratio, i) => (
+          <li key={i} className="mb-2 break-inside-avoid lg:mb-4">
+            <div className="animate-pulse rounded-card bg-graphite" style={{ aspectRatio: `1 / ${ratio}`, animationDelay: `${i * 90}ms` }} />
+          </li>
+        ))}
+      </ul>
+      <div className="absolute inset-x-0 top-16 flex justify-center px-4">
+        <div className="flex max-w-sm flex-col items-center gap-3 rounded-card border border-hairline bg-onyx px-6 py-8 text-center">
+          <h2 className="font-serif text-title">The library is being stocked</h2>
+          <p className="text-body text-stone">Real haircut photos land here soon. Meanwhile, you can try any cut from a screenshot.</p>
+          <Link href="/decode" className={buttonClass("primary")}>
+            Decode a screenshot
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

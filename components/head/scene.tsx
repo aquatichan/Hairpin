@@ -129,7 +129,7 @@ const HOLD_SECONDS = 2.6;
 const MORPH_SECONDS = 1.0;
 const ease = (t: number) => t * t * (3 - 2 * t);
 
-function Head({ fixedStyle, fixedTurn, framing = "hero", speed, onStyle, tilt, palette = "oxblood" }: SceneProps & { speed: number; tilt: Tilt }) {
+function Head({ fixedStyle, fixedTurn, framing = "hero", speed, onStyle, tilt, palette = "champagne" }: SceneProps & { speed: number; tilt: Tilt }) {
   const root = useRef<THREE.Group>(null);
   const turn = useRef<THREE.Group>(null);
   const hair = useRef<THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
@@ -313,11 +313,11 @@ export default function HeadScene(props: SceneProps) {
 
   return (
     <Canvas dpr={[1, 1.75]} camera={{ fov: 32, position: [0, 0, 10] }} gl={{ antialias: true, powerPreference: "high-performance" }} eventSource={typeof document === "undefined" ? undefined : document.body} eventPrefix="client">
-      <Backdrop speed={speed} fixedTime={props.fixedTime} tilt={tilt} palette={props.palette ?? "oxblood"} />
+      <Backdrop speed={speed} fixedTime={props.fixedTime} tilt={tilt} palette={props.palette ?? "champagne"} />
       <Environment />
       <ambientLight intensity={0.15} />
       <directionalLight position={[-3, 5, 6]} intensity={2.4} color={IVORY} />
-      <directionalLight position={[5, 1, -4]} intensity={2.4} color={palettes[props.palette ?? "oxblood"].rimLight} />
+      <directionalLight position={[5, 1, -4]} intensity={2.4} color={palettes[props.palette ?? "champagne"].rimLight} />
       <directionalLight position={[-5, -2, -3]} intensity={0.5} color="#8a8a92" />
       <Suspense fallback={null}>
         <Head {...props} speed={speed} tilt={tilt} />

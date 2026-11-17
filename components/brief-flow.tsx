@@ -100,7 +100,7 @@ function BriefEditor({ saved, photo }: { saved: StoredBrief; photo: Blob | null 
     <div className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-6">
       {saved.mock && <Notice>Demo mode: no AI wrote this brief. The text is placeholder.</Notice>}
       <article className="flex flex-col gap-3 rounded-card bg-ivory p-4 text-onyx">
-        <p className="px-3 text-caption font-semibold tracking-widest text-crimson uppercase">Barber Brief</p>
+        <p className="px-3 text-caption font-semibold tracking-widest text-onyx/60 uppercase">Barber Brief</p>
         <div className="flex items-start gap-3">
           <input aria-label="Style name" value={brief.styleName} onChange={(e) => update({ ...brief, styleName: e.target.value })} className={`${field} font-serif text-headline`} />
           {includePhoto && photo && <BlobImage blob={photo} alt="Your render" className="aspect-square w-20 shrink-0" />}
@@ -117,7 +117,7 @@ function BriefEditor({ saved, photo }: { saved: StoredBrief; photo: Blob | null 
         </label>
       </article>
       <label className="flex items-center gap-3 text-body">
-        <input type="checkbox" checked={includePhoto} disabled={!photo} onChange={(e) => update(brief, e.target.checked)} className="size-4 accent-crimson" />
+        <input type="checkbox" checked={includePhoto} disabled={!photo} onChange={(e) => update(brief, e.target.checked)} className="size-4 accent-champagne" />
         Include my photo on the card
       </label>
       <div className="flex gap-2">

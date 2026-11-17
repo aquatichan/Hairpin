@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { HeroCanvas } from "@/components/head/hero-canvas";
 import { palettes, type PaletteName } from "@/components/head/palettes";
 
-/** Still render of one hairstyle. Used by scripts/render-looks.mjs to make the preview catalog images. */
+/** Still render of one hairstyle and palette, for design reviews: /dev/thumb?style=2&palette=champagne */
 function Thumb() {
   const q = useSearchParams();
   const p = q.get("palette");

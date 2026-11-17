@@ -9,10 +9,13 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const colors = ["onyx", "graphite", "slate", "hairline", "stone", "ivory", "crimson"] as const;
+const colors = ["onyx", "graphite", "slate", "hairline", "stone", "ivory", "champagne"] as const;
 const swatch: Record<(typeof colors)[number], string> = {
-  onyx: "bg-onyx", graphite: "bg-graphite", slate: "bg-slate", hairline: "bg-hairline", stone: "bg-stone", ivory: "bg-ivory", crimson: "bg-crimson",
+  onyx: "bg-onyx", graphite: "bg-graphite", slate: "bg-slate", hairline: "bg-hairline", stone: "bg-stone", ivory: "bg-ivory", champagne: "bg-champagne",
 };
+
+const swatchImage = (color: string) =>
+  `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="4" height="5"><rect width="4" height="5" fill="${color}"/></svg>`)}`;
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -70,7 +73,7 @@ export default function Styleguide() {
       </Section>
       <Section title="Before / after">
         <div className="max-w-xs">
-          <BeforeAfter before="/looks/buzz-0.jpg" after="/looks/afro-0.jpg" label="Compare before and after" />
+          <BeforeAfter before={swatchImage("#222225")} after={swatchImage("#c9a96e")} label="Compare before and after" />
         </div>
       </Section>
       <Section title="Sheet, skeleton, empty state">

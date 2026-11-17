@@ -10,7 +10,7 @@ const assert = require("node:assert");
 const mode = process.argv[2] ?? "mock";
 const base = process.env.BASE_URL ?? "http://localhost:3000";
 const shots = process.env.SHOTS;
-const photo = path.join(__dirname, "..", "public", "looks", "buzz-0.jpg");
+const photo = path.join(__dirname, "fixtures", "photo.jpg");
 
 (async () => {
   const browser = await chromium.launch();
@@ -19,26 +19,18 @@ const photo = path.join(__dirname, "..", "public", "looks", "buzz-0.jpg");
   page.on("pageerror", (e) => errors.push(e.message));
   const shot = (name) => shots && page.screenshot({ path: path.join(shots, `${name}.png`) });
 
-  // First visit is sent through onboarding
+  // The gallery is home. With no photos yet it shows an honest "being stocked" state.
   await page.goto(`${base}/discover`);
-  await page.waitForURL(/\/welcome/);
+  await page.getByRole("heading", { name: "The library is being stocked" }).waitFor();
+  await shot("gallery-empty");
+
+  // Trying a screenshot: onboarding runs on the way to Try the first time.
+  await page.goto(`${base}/welcome?next=${encodeURIComponent("/try")}`);
   for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Next" }).click();
   await page.getByRole("button", { name: "wavy" }).click();
   await shot("welcome");
-  await page.getByRole("button", { name: "Start browsing" }).click();
-  await page.waitForURL(/\/discover/);
-
-  // Search narrows the library
-  await page.getByLabel("Search cuts").fill("afro");
-  await page.getByRole("button", { name: "Open Buzz cut" }).first().waitFor({ state: "detached" });
-  assert.equal(await page.getByRole("button", { name: "Open Rounded afro" }).count(), 2);
-  await page.getByLabel("Search cuts").fill("");
-
-  // Discover -> look sheet -> Try
-  await page.getByRole("button", { name: "Open Buzz cut" }).first().click();
-  await shot("sheet");
-  await page.getByRole("link", { name: "Try on me" }).click();
-  await page.waitForURL(/\/try\?look=/);
+  await page.getByRole("button", { name: "Let's try it" }).click();
+  await page.waitForURL(/\/try$/);
 
   // Photo setup needs both a photo and consent
   const save = page.getByRole("button", { name: "Save my photo" });
@@ -48,6 +40,10 @@ const photo = path.join(__dirname, "..", "public", "looks", "buzz-0.jpg");
   await shot("photo");
   await save.click();
 
+  // No look picked yet, so try a screenshot.
+  await page.getByText("Try a screenshot").waitFor();
+  await page.getByText("Try a screenshot").locator("input[type=file]").setInputFiles(photo);
+  await page.getByRole("heading", { name: "Your screenshot" }).waitFor();
   await page.getByRole("button", { name: "Try this cut on me" }).click();
   if (mode === "unconnected") {
     await page.getByRole("alert").filter({ hasText: "isn't connected" }).waitFor();
@@ -102,8 +98,7 @@ const photo = path.join(__dirname, "..", "public", "looks", "buzz-0.jpg");
   await page.goto(`${base}/you`);
   await page.getByRole("button", { name: "Delete all my data" }).click();
   await page.getByRole("button", { name: "Yes, delete it all" }).click();
-  // A full wipe also resets onboarding
-  await page.waitForURL(/\/welcome/);
+  await page.getByText("No photo saved yet.").waitFor();
   assert.deepEqual(errors, [], "no uncaught page errors");
   await browser.close();
 })().catch((e) => {

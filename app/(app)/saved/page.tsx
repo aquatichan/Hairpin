@@ -33,7 +33,7 @@ export default function Saved() {
             {data.briefs.map((b) => (
               <li key={b.id} className="flex flex-col gap-2">
                 <Link href={`/brief?id=${b.id}`} className="flex aspect-[4/5] flex-col justify-between rounded-card bg-ivory p-4 text-onyx">
-                  <span className="text-caption font-semibold tracking-widest text-crimson uppercase">Barber Brief</span>
+                  <span className="text-caption font-semibold tracking-widest text-onyx/60 uppercase">Barber Brief</span>
                   <span className="font-serif text-title">{b.brief.styleName}</span>
                 </Link>
                 <button type="button" className={`${remove} self-start`} onClick={() => localStore.remove("briefs", b.id)}>

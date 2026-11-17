@@ -3,7 +3,7 @@ import { briefSections, type BarberBrief } from "./brief";
 const IVORY = "#f4efe6";
 const ONYX = "#0b0b0c";
 const MUTED = "#6b665f";
-const CRIMSON = "#dc143c";
+const CHAMPAGNE = "#9c7f45"; // champagne, deepened for contrast on the ivory card
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, width: number) {
   const lines: string[] = [];
@@ -48,7 +48,7 @@ export async function briefToPng(brief: BarberBrief, opts: { story?: boolean; ph
   let y = cardY + 92;
   ctx.textBaseline = "alphabetic";
 
-  ctx.fillStyle = CRIMSON;
+  ctx.fillStyle = CHAMPAGNE;
   ctx.font = `600 22px ${sans}`;
   ctx.fillText("BARBER BRIEF", x, y);
   y += 84;
