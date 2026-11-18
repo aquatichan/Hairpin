@@ -1,7 +1,7 @@
 import { errorResponse, publikFailure } from "@/lib/api-error";
-import { aiConfigured, editImage } from "@/lib/ai";
+import { editImage } from "@/lib/ai";
 import { publikMock } from "@/lib/publik";
-import { verifyCaller } from "@/lib/server-auth";
+import { requireMember } from "@/lib/publik-gate";
 
 const MAX_BYTES = 4 * 1024 * 1024; // Publik's request body limit
 const TWEAKS = ["Shorter", "Longer", "More volume", "Curtain fringe", "Lower fade", "Messier texture"];
@@ -40,11 +40,11 @@ export async function POST(request: Request) {
     // Demo mode: echo the photo back untouched. The client labels it as a demo.
     return new Response(photo, { headers: { "Content-Type": photo.type, "x-hairpin-mock": "1" } });
   }
-  if (!aiConfigured()) return errorResponse(503, { code: "not_connected", message: "AI try-on isn't connected in this build yet." });
-  if (!(await verifyCaller(request))) return errorResponse(401, { code: "signed_out", message: "Please sign in again." });
+  const member = await requireMember(request);
+  if (!member.ok) return member.response;
 
   try {
-    const { data, chargeMicros, provider } = await editImage({
+    const { data, chargeMicros, provider } = await editImage(member.provider, {
       prompt: prompt(lookName, hasReference, tweak),
       images: hasReference ? [photo, reference] : [photo],
     });

@@ -2,9 +2,10 @@ import "server-only";
 import { real } from "./env";
 
 /**
- * The single server-side door to the Publik API. All text and image generation
- * goes through here so that spend is attributed to Publik. Never import this
- * from a client component and never call another AI vendor directly.
+ * The single server-side door to the Publik API. Each call runs on the
+ * signed-in person's own publik key, which lib/publik.server.ts creates for
+ * them and lib/publik-gate.ts hands to the route. Never import this from a
+ * client component.
  */
 
 export class PublikError extends Error {
@@ -22,12 +23,8 @@ export type PublikResult<T> = { data: T; chargeMicros: number | null };
 /** The public Publik endpoint; PUBLIK_API_BASE_URL only needs setting to point somewhere else. */
 const baseUrl = () => real(process.env.PUBLIK_API_BASE_URL) ?? "https://publikhq.com/api/v1";
 
-export const publikConfigured = Boolean(real(process.env.PUBLIK_API_KEY));
-
-async function call<T>(path: string, init: RequestInit): Promise<PublikResult<T>> {
+async function call<T>(key: string, path: string, init: RequestInit): Promise<PublikResult<T>> {
   const base = baseUrl();
-  const key = real(process.env.PUBLIK_API_KEY);
-  if (!key) throw new PublikError("Publik is not configured", 503);
 
   const res = await fetch(`${base.replace(/\/$/, "")}${path}`, {
     ...init,
@@ -47,8 +44,8 @@ export const publikMock = process.env.PUBLIK_MOCK === "1" && process.env.NODE_EN
 
 export type ImageResponse = { data: { url?: string; b64_json?: string }[] };
 
-export function generateImage(input: { prompt: string; size?: string; model?: string }) {
-  return call<ImageResponse>("/images/generations", {
+export function generateImage(key: string, input: { prompt: string; size?: string; model?: string }) {
+  return call<ImageResponse>(key, "/images/generations", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -56,13 +53,13 @@ export function generateImage(input: { prompt: string; size?: string; model?: st
 }
 
 /** `images` are sent in order: the person photo first, then any reference. */
-export function editImage(input: { prompt: string; images: Blob[]; size?: string; model?: string }) {
+export function editImage(key: string, input: { prompt: string; images: Blob[]; size?: string; model?: string }) {
   const form = new FormData();
   form.set("prompt", input.prompt);
   if (input.size) form.set("size", input.size);
   if (input.model) form.set("model", input.model);
   for (const image of input.images) form.append("image[]", image);
-  return call<ImageResponse>("/images/edits", { method: "POST", body: form });
+  return call<ImageResponse>(key, "/images/edits", { method: "POST", body: form });
 }
 
 export type ChatResponse = { choices: { message: { content: string } }[] };
@@ -86,8 +83,8 @@ export function chatMessages(input: ChatInput) {
 }
 
 /** `tier` is a Publik tier name (publik-fast, publik-balanced), never a vendor model name. */
-export function chat(input: ChatInput) {
-  return call<ChatResponse>("/chat/completions", {
+export function chat(key: string, input: ChatInput) {
+  return call<ChatResponse>(key, "/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
