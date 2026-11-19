@@ -1,8 +1,8 @@
 import { errorResponse, publikFailure } from "@/lib/api-error";
 import { barberBriefSchema, briefRequestSchema, type BarberBrief } from "@/lib/brief";
-import { aiConfigured, chat, extractJson } from "@/lib/ai";
+import { chat, extractJson } from "@/lib/ai";
 import { publikMock } from "@/lib/publik";
-import { verifyCaller } from "@/lib/server-auth";
+import { requireMember } from "@/lib/publik-gate";
 
 const SYSTEM = `You write a Barber Brief: clear instructions a client shows their barber.
 Reply with one JSON object and nothing else, with exactly these keys:
@@ -35,16 +35,16 @@ export async function POST(request: Request) {
     };
     return Response.json({ brief, mock: true });
   }
-  if (!aiConfigured()) return errorResponse(503, { code: "not_connected", message: "AI briefs aren't connected in this build yet." });
-  if (!(await verifyCaller(request))) return errorResponse(401, { code: "signed_out", message: "Please sign in again." });
+  const member = await requireMember(request);
+  if (!member.ok) return member.response;
 
   const user = [`Haircut: ${lookName}.`, tweak ? `Adjustment: ${tweak}.` : "", notes ? `Client notes: ${notes}` : ""].filter(Boolean).join("\n");
   try {
-    const first = await chat({ tier: "publik-balanced", system: SYSTEM, user, json: true });
+    const first = await chat(member.provider, { tier: "publik-balanced", system: SYSTEM, user, json: true });
     let brief = parse(first.data.choices?.[0]?.message?.content ?? "");
     if (!brief) {
       // One repair attempt, then the client shows a retry state.
-      const repair = await chat({
+      const repair = await chat(member.provider, {
         tier: "publik-balanced",
         system: SYSTEM,
         user: `${user}\n\nYour last reply was not valid JSON for the required keys. Reply again with only the JSON object.`,

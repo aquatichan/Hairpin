@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth-provider";
 import { BlobImage } from "@/components/ui/blob-image";
 import { Button, buttonClass } from "@/components/ui/button";
 import { ChoiceRow } from "@/components/ui/choice-row";
+import { setChoice, useAiChoice } from "@/lib/ai-choice";
 import { localStore } from "@/lib/local-store";
 import { clearProfile, daysUntilNextCut, saveProfile, useProfile } from "@/lib/profile";
 import { useLocal } from "@/lib/use-local";
@@ -57,6 +58,21 @@ function NextCut() {
           Plan my next cut
         </Link>
       )}
+    </Section>
+  );
+}
+
+function AiSetting() {
+  const choice = useAiChoice();
+  if (!choice) return null;
+  return (
+    <Section title="AI">
+      <p className="text-body text-stone">
+        {choice.mode === "publik" ? "Your try-ons, Decode and Barber Briefs run on your publik plan." : "Your try-ons, Decode and Barber Briefs run on your own OpenAI key, kept on this device."}
+      </p>
+      <Button variant="ghost" onClick={() => setChoice(null)}>
+        {choice.mode === "publik" ? "Use my own key instead" : "Change key or use publik"}
+      </Button>
     </Section>
   );
 }
@@ -126,6 +142,8 @@ export default function You() {
           </Button>
         )}
       </Section>
+
+      <AiSetting />
 
       {status === "signed-in" && (
         <Section title="Account">

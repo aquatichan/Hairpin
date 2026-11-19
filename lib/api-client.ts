@@ -1,3 +1,4 @@
+import { getChoice } from "./ai-choice";
 import { firebaseApp, firebaseConfigured } from "./firebase";
 
 export class ApiClientError extends Error {
@@ -10,7 +11,7 @@ export class ApiClientError extends Error {
   }
 }
 
-async function authHeader(): Promise<Record<string, string>> {
+export async function authHeader(): Promise<Record<string, string>> {
   if (!firebaseConfigured) return {};
   const { getAuth } = await import("firebase/auth");
   const token = await getAuth(firebaseApp()).currentUser?.getIdToken();
@@ -20,7 +21,10 @@ async function authHeader(): Promise<Record<string, string>> {
 export async function apiFetch(path: string, init: RequestInit) {
   let response: Response;
   try {
-    response = await fetch(path, { ...init, headers: { ...init.headers, ...(await authHeader()) } });
+    // "Use my own key": the key rides along with this request only.
+    const choice = getChoice();
+    const ownKey: Record<string, string> = choice?.mode === "own" ? { "x-hairpin-own-key": choice.key } : {};
+    response = await fetch(path, { ...init, headers: { ...init.headers, ...(await authHeader()), ...ownKey } });
   } catch {
     throw new ApiClientError("You seem to be offline. Check your connection and try again.", "offline");
   }

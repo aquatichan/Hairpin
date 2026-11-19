@@ -20,10 +20,20 @@ Project, then Settings, then Environment Variables. Paste each value there, neve
 | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Google sign-in, and the server checking who is calling | same config (`projectId`) |
 | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | not used yet | same config (`storageBucket`) |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | not used yet | same config (`appId`) |
-| `PUBLIK_API_KEY` | try-on renders, Decode, Barber Brief | Publik dashboard. Mark it Sensitive. |
-| `AI_FALLBACK` and `OPENAI_API_KEY` | optional fallback | set `AI_FALLBACK=openai` only if you want it; that spend does not count toward the score |
+| `PUBLIK_APP_TOKEN` | Sign in with publik, and every AI call | publik's device flow writes it to `.env.local` (git-ignored); copy it from there. Mark it Sensitive. |
+| `PUBLIK_INSTALL_SECRET` | Sign in with publik | 32+ random characters, also in `.env.local`. Mark it Sensitive and never change it: a new value gives everyone a new publik install. |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | keeping each person's publik sign-in | set for you by the Upstash integration (step 2b) |
 
-Do not set `PUBLIK_MOCK`. `PUBLIK_API_BASE_URL`, `PUBLIK_APP_TOKEN` and `NEXT_PUBLIC_PUBLIK_APP_SLUG` are not needed yet.
+Do not set `PUBLIK_MOCK`. `PUBLIK_API_BASE_URL` only needs setting to point somewhere other than publik. There is no shared AI key any more: each person's AI runs on their own publik plan, or on their own OpenAI key from their device.
+
+**Set these before you merge the publik gate.** Without them, signed-in people see "Sign in with publik isn't connected in this build yet." and can't get into the app.
+
+## 2b. Add the Redis store (about 2 minutes)
+
+Each person's publik record (their publik key included) has to outlive a single request, and Vercel functions keep no memory between requests.
+
+1. Project, then Storage, then Create Database, then Upstash for Redis (the free plan is enough).
+2. Connect it to this project for Production and Preview. Vercel adds `KV_REST_API_URL` and `KV_REST_API_TOKEN` itself.
 
 After adding or changing any variable, open Deployments, pick the latest one, and choose Redeploy. The `NEXT_PUBLIC_` values are baked in at build time, so they do nothing until a redeploy.
 

@@ -1,75 +1,68 @@
 import "server-only";
-import { real } from "./env";
 import * as publik from "./publik";
 import { PublikError } from "./publik";
 
 /**
- * Provider routing. Publik is always tried first, because only Publik spend
- * counts toward the fellowship score. The OpenAI fallback is opt-in
- * (AI_FALLBACK=openai plus OPENAI_API_KEY) and is only used when Publik is not
- * configured or fails with something other than a billing error.
+ * Provider routing. Each request runs on the key lib/publik-gate.ts resolved
+ * for the signed-in person: their publik key (Connect your plan), or the
+ * OpenAI key they gave under "Use my own key". There is no shared app key.
  */
 
-const fallbackOn = () => process.env.AI_FALLBACK === "openai" && Boolean(real(process.env.OPENAI_API_KEY));
-export const aiConfigured = () => publik.publikConfigured || fallbackOn();
-
-export type Provider = "publik" | "openai";
+export type AiProvider = { kind: "publik" | "own"; apiKey: string };
+export type Provider = AiProvider["kind"];
 type Result<T> = { data: T; chargeMicros: number | null; provider: Provider };
 
-async function openai<T>(path: string, init: RequestInit): Promise<T> {
+/** The person's own OpenAI key was refused or OpenAI failed. Their own key's problems are theirs to fix, so the message says so. */
+export class OwnKeyError extends Error {
+  constructor(readonly status: number) {
+    super(
+      status === 401
+        ? "OpenAI refused your key. Check it under You, then AI."
+        : status === 429
+          ? "Your OpenAI account is out of credit or rate-limited."
+          : "OpenAI couldn't do that with your key. Please try again.",
+    );
+  }
+}
+
+async function openai<T>(apiKey: string, path: string, init: RequestInit): Promise<T> {
   const res = await fetch(`https://api.openai.com/v1${path}`, {
     ...init,
-    headers: { ...init.headers, Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+    headers: { ...init.headers, Authorization: `Bearer ${apiKey}` },
     cache: "no-store",
   });
   const body = await res.json().catch(() => null);
-  if (!res.ok) throw new PublikError("The AI provider request failed", res.status === 402 ? 502 : res.status);
+  if (!res.ok) throw new OwnKeyError(res.status);
   return body as T;
 }
 
-async function route<T>(primary: () => Promise<publik.PublikResult<T>>, fallback: () => Promise<T>): Promise<Result<T>> {
-  if (publik.publikConfigured) {
-    try {
-      return { ...(await primary()), provider: "publik" };
-    } catch (e) {
-      // A 402 means the user needs to top up with Publik: never route around it.
-      if (!fallbackOn() || (e instanceof PublikError && e.status === 402)) throw e;
-    }
-  }
-  if (!fallbackOn()) throw new PublikError("AI is not configured", 503);
-  return { data: await fallback(), chargeMicros: null, provider: "openai" };
-}
-
-export function editImage(input: { prompt: string; images: Blob[] }) {
-  return route(
-    () => publik.editImage(input),
-    () => {
-      const form = new FormData();
-      form.set("model", process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1");
-      form.set("prompt", input.prompt);
-      for (const image of input.images) form.append("image[]", image, "image.jpg");
-      return openai<publik.ImageResponse>("/images/edits", { method: "POST", body: form });
-    },
-  );
+export async function editImage(provider: AiProvider, input: { prompt: string; images: Blob[] }): Promise<Result<publik.ImageResponse>> {
+  if (provider.kind === "publik") return { ...(await publik.editImage(provider.apiKey, input)), provider: "publik" };
+  const form = new FormData();
+  form.set("model", process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1");
+  form.set("prompt", input.prompt);
+  for (const image of input.images) form.append("image[]", image, "image.jpg");
+  const data = await openai<publik.ImageResponse>(provider.apiKey, "/images/edits", { method: "POST", body: form });
+  return { data, chargeMicros: null, provider: "own" };
 }
 
 export type ChatInput = { tier: "publik-fast" | "publik-balanced"; system: string; user: string; imageDataUrl?: string; json?: boolean };
 
-export function chat(input: ChatInput) {
-  return route(
-    () => publik.chat(input),
-    () =>
-      openai<publik.ChatResponse>("/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: process.env.OPENAI_CHAT_MODEL ?? "gpt-4o-mini",
-          messages: publik.chatMessages(input),
-          ...(input.json ? { response_format: { type: "json_object" } } : {}),
-        }),
-      }),
-  );
+export async function chat(provider: AiProvider, input: ChatInput): Promise<Result<publik.ChatResponse>> {
+  if (provider.kind === "publik") return { ...(await publik.chat(provider.apiKey, input)), provider: "publik" };
+  const data = await openai<publik.ChatResponse>(provider.apiKey, "/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: process.env.OPENAI_CHAT_MODEL ?? "gpt-4o-mini",
+      messages: publik.chatMessages(input),
+      ...(input.json ? { response_format: { type: "json_object" } } : {}),
+    }),
+  });
+  return { data, chargeMicros: null, provider: "own" };
 }
+
+export { PublikError };
 
 /** Pulls the first JSON object out of a model reply. */
 export function extractJson(text: string): unknown {

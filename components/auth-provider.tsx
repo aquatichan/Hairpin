@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { setChoice } from "@/lib/ai-choice";
 import { firebaseApp, firebaseConfigured } from "@/lib/firebase";
 
 export type AuthStatus = "loading" | "signed-in" | "signed-out" | "unconfigured";
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     const auth = await import("firebase/auth");
     await auth.signOut(auth.getAuth(firebaseApp()));
+    setChoice(null); // the next person on this device must not inherit an own key
   }, []);
 
   const value = useMemo(

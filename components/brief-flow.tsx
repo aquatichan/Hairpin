@@ -28,6 +28,7 @@ export function BriefFlow() {
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [topUpUrl, setTopUpUrl] = useState<string | null>(null);
   const inFlight = useRef(false);
 
   if (loaded === undefined) return <div className="mx-auto max-w-md px-4 py-6"><Skeleton className="aspect-[4/5]" /></div>;
@@ -49,6 +50,7 @@ export function BriefFlow() {
       await localStore.put("briefs", { id: newId(), renderId: render.id, brief, mock, includePhoto: false, createdAt: Date.now() });
     } catch (e) {
       setError(e instanceof ApiClientError ? e.message : "Something went wrong. Please try again.");
+      setTopUpUrl(e instanceof ApiClientError ? (e.topUpUrl ?? null) : null);
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -64,7 +66,16 @@ export function BriefFlow() {
           Anything your barber should know? (optional)
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={500} rows={3} placeholder="Current length, cowlicks, how long you'll spend styling" className="rounded-card border border-hairline bg-slate px-4 py-3 text-body placeholder:text-stone" />
         </label>
-        {error && <Notice tone="error">{error}</Notice>}
+        {error && (
+          <Notice tone="error">
+            {error}{" "}
+            {topUpUrl && (
+              <a href={topUpUrl} className="underline underline-offset-4" target="_blank" rel="noreferrer">
+                Top up
+              </a>
+            )}
+          </Notice>
+        )}
         <Button onClick={generate} disabled={busy}>
           {busy ? "Writing…" : "Make my Barber Brief"}
         </Button>

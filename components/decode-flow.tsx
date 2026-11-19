@@ -24,6 +24,7 @@ export function DecodeFlow() {
   const [result, setResult] = useState<{ cut: DecodedCut; mock: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [topUpUrl, setTopUpUrl] = useState<string | null>(null);
   const inFlight = useRef(false);
 
   async function onPick(file: File | undefined) {
@@ -49,6 +50,7 @@ export function DecodeFlow() {
       setResult(await response.json());
     } catch (e) {
       setError(e instanceof ApiClientError ? e.message : "Something went wrong. Please try again.");
+      setTopUpUrl(e instanceof ApiClientError ? (e.topUpUrl ?? null) : null);
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -79,7 +81,16 @@ export function DecodeFlow() {
       )}
 
       {busy && <Notice>Reading the cut…</Notice>}
-      {error && <Notice tone="error">{error}</Notice>}
+      {error && (
+          <Notice tone="error">
+            {error}{" "}
+            {topUpUrl && (
+              <a href={topUpUrl} className="underline underline-offset-4" target="_blank" rel="noreferrer">
+                Top up
+              </a>
+            )}
+          </Notice>
+        )}
 
       {result && (
         <article className="flex animate-rise flex-col gap-4 rounded-card border border-hairline bg-graphite p-4">

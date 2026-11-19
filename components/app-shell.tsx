@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "./auth-provider";
+import { PublikGate } from "./publik-gate";
 import { DecodeIcon, DiscoverIcon, SavedIcon, TryIcon, YouIcon } from "./ui/icons";
 
 const tabs = [
@@ -27,7 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // While sign-in state resolves, the shell stays mounted but hidden, so the page is always rendered.
   const gated = status === "loading" || status === "signed-out";
 
-  return (
+  const shell = (
     <div className={`flex flex-1 flex-col lg:flex-row ${gated ? "invisible" : "animate-fade"}`} aria-hidden={gated || undefined}>
       <nav
         aria-label="Primary"
@@ -63,4 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
     </div>
   );
+
+  // Google sign-in first, then Sign in with publik, then the app.
+  return status === "signed-in" ? <PublikGate>{shell}</PublikGate> : shell;
 }

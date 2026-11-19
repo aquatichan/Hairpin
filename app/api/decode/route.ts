@@ -1,8 +1,8 @@
-import { aiConfigured, chat, extractJson } from "@/lib/ai";
+import { chat, extractJson } from "@/lib/ai";
 import { errorResponse, publikFailure } from "@/lib/api-error";
 import { decodedCutSchema, type DecodedCut } from "@/lib/brief";
 import { publikMock } from "@/lib/publik";
-import { verifyCaller } from "@/lib/server-auth";
+import { requireMember } from "@/lib/publik-gate";
 
 const MAX_BYTES = 3 * 1024 * 1024; // stays under Publik's 4 MB body limit once base64-encoded
 
@@ -28,12 +28,12 @@ export async function POST(request: Request) {
     const cut: DecodedCut = { styleName: "Demo result", summary: DEMO, top: DEMO, sides: DEMO, back: DEMO, texture: DEMO, upkeep: "medium", askFor: [] };
     return Response.json({ cut, mock: true });
   }
-  if (!aiConfigured()) return errorResponse(503, { code: "not_connected", message: "The analyzer isn't connected in this build yet." });
-  if (!(await verifyCaller(request))) return errorResponse(401, { code: "signed_out", message: "Please sign in again." });
+  const member = await requireMember(request);
+  if (!member.ok) return member.response;
 
   try {
     const imageDataUrl = `data:${image.type};base64,${Buffer.from(await image.arrayBuffer()).toString("base64")}`;
-    const reply = await chat({ tier: "publik-balanced", system: SYSTEM, user: "Describe this haircut.", imageDataUrl, json: true });
+    const reply = await chat(member.provider, { tier: "publik-balanced", system: SYSTEM, user: "Describe this haircut.", imageDataUrl, json: true });
     const cut = decodedCutSchema.safeParse(extractJson(reply.data.choices?.[0]?.message?.content ?? ""));
     if (!cut.success) return errorResponse(502, { code: "render_failed", message: "The analysis didn't come out right. Please try again." });
     return Response.json({ cut: cut.data, mock: false });
