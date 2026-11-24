@@ -1,0 +1,295 @@
+{
+  "_readme": "Curated looks. Put the image in content/looks-src/<file>, edit the entry, then run `npm run looks`. id defaults to the file name (men-01-slicked-back.jpg -> men-01-slicked-back). audience: men | women | any. length: short | medium | long. hairType: 1a-4c. faceShapes (optional): oval round square heart oblong diamond. tags: only words from lib/style.ts STYLE_TAGS. Set \"illustrative\": true for AI-made or stand-in images.",
+  "looks": [
+    {
+      "file": "men-01-slicked-back.jpg",
+      "name": "Slicked-back side part",
+      "description": "Short sides with length on top combed back and to the side with a defined part. Ask for a classic taper at the sides and enough length on top to comb, finished with a glossy pomade.",
+      "audience": "men",
+      "length": "short",
+      "hairType": "1a",
+      "faceShapes": [
+        "round"
+      ],
+      "tags": [
+        "slick-back",
+        "side-part",
+        "sleek",
+        "taper"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "men-02-curly-fade.jpg",
+      "name": "Curly top with fade",
+      "description": "Tight curls kept full on top with a skin fade that blends up the sides and a sharp line-up. Ask for the curls to be cut dry so the shape follows how they spring.",
+      "audience": "men",
+      "length": "short",
+      "hairType": "4a",
+      "faceShapes": [
+        "round"
+      ],
+      "tags": [
+        "curls",
+        "fade",
+        "volume-top",
+        "taper"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "men-03-layered-flow.webp",
+      "name": "Long layered flow",
+      "description": "Shoulder-length waves with loose layers through the mid-lengths and no hard lines. Ask for light layering to remove weight, and trim only the ends to keep the length.",
+      "audience": "men",
+      "length": "long",
+      "hairType": "2c",
+      "faceShapes": [
+        "square",
+        "diamond"
+      ],
+      "tags": [
+        "layers",
+        "waves",
+        "texture",
+        "natural"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "men-04-classic-taper.webp",
+      "name": "Classic taper",
+      "description": "A clean taper that tightens gently from the sides into the neckline, with length on top brushed across. Ask for scissor-over-comb blending rather than a hard fade.",
+      "audience": "men",
+      "length": "short",
+      "hairType": "1b",
+      "faceShapes": [
+        "round"
+      ],
+      "tags": [
+        "taper",
+        "side-part",
+        "low-maintenance"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "men-05-french-crop.jpg",
+      "name": "French crop",
+      "description": "A short, textured top cut forward into a straight fringe, with a low fade at the sides. Ask for point-cutting through the top so the fringe sits choppy and a blunt fringe line.",
+      "audience": "men",
+      "length": "short",
+      "hairType": "1c",
+      "faceShapes": [
+        "oval",
+        "diamond",
+        "oblong"
+      ],
+      "tags": [
+        "crop",
+        "fringe",
+        "fade",
+        "texture",
+        "low-maintenance"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "men-06-curtain-cut.webp",
+      "name": "Curtain cut",
+      "description": "Mid-length hair parted in the middle and falling to each side. Ask for long layers around the face so the curtains frame the cheekbones, and keep the ends soft.",
+      "audience": "men",
+      "length": "medium",
+      "hairType": "2a",
+      "faceShapes": [
+        "square"
+      ],
+      "tags": [
+        "curtain-fringe",
+        "center-part",
+        "layers"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "men-07-modern-pompadour.webp",
+      "name": "Modern pompadour",
+      "description": "Height swept up and back from the front with a faded, tidy side. Ask for length on top, a mid fade and a blow-dry with a little hold to build the volume.",
+      "audience": "men",
+      "length": "short",
+      "hairType": "1b",
+      "faceShapes": [
+        "round"
+      ],
+      "tags": [
+        "quiff",
+        "volume-top",
+        "fade",
+        "side-part"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "men-08-buzz-cut-fade.jpg",
+      "name": "Buzz cut with fade",
+      "description": "An even clipper cut on top with a slightly tighter fade at the sides and a natural hairline. Ask for a guard length on top and a clean neckline, and a zero-to-one blend at the sides.",
+      "audience": "men",
+      "length": "short",
+      "hairType": "1a",
+      "faceShapes": [
+        "round"
+      ],
+      "tags": [
+        "buzz",
+        "fade",
+        "low-maintenance"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "women-01-long-layered.png",
+      "name": "Long layers",
+      "description": "Long, glossy hair with long layers that fall in a soft V at the back. Ask for layers that start below the shoulders so the length stays and the ends keep their weight.",
+      "audience": "women",
+      "length": "long",
+      "hairType": "1a",
+      "faceShapes": [
+        "diamond"
+      ],
+      "tags": [
+        "long-layers",
+        "layers",
+        "sleek"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "women-02-sleek-blunt-bob.jpg",
+      "name": "Sleek blunt bob",
+      "description": "A jaw-length bob cut to one sharp line with a smooth finish. Ask for no layers and the line to sit just at the jaw, with a side part and a polished blow-dry.",
+      "audience": "women",
+      "length": "short",
+      "hairType": "1a",
+      "faceShapes": [
+        "heart"
+      ],
+      "tags": [
+        "bob",
+        "blunt",
+        "chin-length",
+        "sleek"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "women-03-curtain-bangs.jpg",
+      "name": "Curtain bangs with layers",
+      "description": "Shoulder-length hair with face-framing layers and soft curtain bangs parted at the centre. Ask for the bangs to blend into the layers, not sit as a separate shelf.",
+      "audience": "women",
+      "length": "medium",
+      "hairType": "1b",
+      "faceShapes": [
+        "square"
+      ],
+      "tags": [
+        "curtain-fringe",
+        "layers",
+        "center-part"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "women-04-wavy-lob.jpg",
+      "name": "Wavy lob",
+      "description": "A collarbone-length cut with soft, tousled waves and sun-kissed dimension. Ask for a slightly shorter back, a few light layers and waves set with a large barrel.",
+      "audience": "women",
+      "length": "medium",
+      "hairType": "2b",
+      "faceShapes": [
+        "square",
+        "diamond",
+        "heart"
+      ],
+      "tags": [
+        "lob",
+        "waves",
+        "texture",
+        "layers"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "women-05-pixie-cut.jpg",
+      "name": "Textured pixie",
+      "description": "Short and piecey with a longer top that sweeps across the forehead and tidy sides. Ask to keep the nape neat and the top texturised so it holds shape without much product.",
+      "audience": "women",
+      "length": "short",
+      "hairType": "1b",
+      "faceShapes": [
+        "diamond",
+        "square"
+      ],
+      "tags": [
+        "pixie",
+        "side-fringe",
+        "texture",
+        "low-maintenance"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "women-06-shag-cut.jpg",
+      "name": "Shaggy layers with fringe",
+      "description": "Choppy layers through the length with a wispy fringe and plenty of movement. Ask for shorter layers around the crown, a soft fringe and texture through the ends.",
+      "audience": "women",
+      "length": "medium",
+      "hairType": "2a",
+      "faceShapes": [
+        "diamond",
+        "oblong",
+        "oval"
+      ],
+      "tags": [
+        "shag",
+        "fringe",
+        "layers",
+        "texture"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "women-07-sleek-low-bun.webp",
+      "name": "Sleek low bun",
+      "description": "Hair smoothed back into a low twisted bun at the nape. Ask for a centre or soft side part and long layers, so the bun sits full without bulk at the crown.",
+      "audience": "women",
+      "length": "long",
+      "hairType": "1a",
+      "faceShapes": [
+        "diamond"
+      ],
+      "tags": [
+        "bun",
+        "sleek",
+        "center-part"
+      ],
+      "illustrative": false
+    },
+    {
+      "file": "women-08-voluminous-curls.jpg",
+      "name": "Voluminous curls",
+      "description": "Big, bouncy curls with lots of volume at the crown and soft definition through the lengths. Ask for a dry cut with round layering so the shape stays full and not triangular.",
+      "audience": "women",
+      "length": "long",
+      "hairType": "3b",
+      "faceShapes": [
+        "oblong"
+      ],
+      "tags": [
+        "curls",
+        "volume-top",
+        "natural"
+      ],
+      "illustrative": false
+    }
+  ]
+}

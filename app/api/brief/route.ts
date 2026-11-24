@@ -2,7 +2,7 @@ import { errorResponse, publikFailure } from "@/lib/api-error";
 import { barberBriefSchema, briefRequestSchema, type BarberBrief } from "@/lib/brief";
 import { chat, extractJson } from "@/lib/ai";
 import { publikMock } from "@/lib/publik";
-import { requireMember } from "@/lib/publik-gate";
+import { requireKeyedMember } from "@/lib/publik-gate";
 
 const SYSTEM = `You write a Barber Brief: clear instructions a client shows their barber.
 Reply with one JSON object and nothing else, with exactly these keys:
@@ -12,7 +12,8 @@ Rules:
 - Never invent exact guard numbers or measurements unless the client stated them.
 - Anything you are unsure of goes in askYourBarber as a question, and in uncertain as a note.
 - Say in maintenance that the barber should adapt the cut to the client's current hair.
-- No brand names. No comments on the client's face or attractiveness.`;
+- No brand names. No comments on the client's face or attractiveness.
+- Never claim the cut will suit, flatter or work for the client, and never promise how it will turn out. Whether it suits them is for the barber to judge in person.`;
 
 const DEMO = "Demo text. Connect Publik to write this section.";
 
@@ -35,12 +36,12 @@ export async function POST(request: Request) {
     };
     return Response.json({ brief, mock: true });
   }
-  const member = await requireMember(request);
+  const member = await requireKeyedMember(request);
   if (!member.ok) return member.response;
 
   const user = [`Haircut: ${lookName}.`, tweak ? `Adjustment: ${tweak}.` : "", notes ? `Client notes: ${notes}` : ""].filter(Boolean).join("\n");
   try {
-    const first = await chat(member.provider, { tier: "publik-balanced", system: SYSTEM, user, json: true });
+    const first = await chat(member.provider, { tier: "publik-balanced", system: SYSTEM, user, json: true, schema: barberBriefSchema });
     let brief = parse(first.data.choices?.[0]?.message?.content ?? "");
     if (!brief) {
       // One repair attempt, then the client shows a retry state.
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
         system: SYSTEM,
         user: `${user}\n\nYour last reply was not valid JSON for the required keys. Reply again with only the JSON object.`,
         json: true,
+        schema: barberBriefSchema,
       });
       brief = parse(repair.data.choices?.[0]?.message?.content ?? "");
     }

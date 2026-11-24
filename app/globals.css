@@ -8,18 +8,25 @@
 */
 @theme {
   --color-*: initial;
-  --color-onyx: #0b0b0c;
-  --color-graphite: #161618;
-  --color-slate: #222225;
-  --color-hairline: #2e2e32;
-  --color-ivory: #f4efe6;
-  --color-stone: #a8a29a;
-  --color-champagne: #c9a96e;
+  /* OKLCH, so equal lightness steps look equal. Surfaces get lighter as they rise: depth without shadows. */
+  --color-onyx: oklch(0.145 0.003 286);
+  --color-graphite: oklch(0.19 0.004 286);
+  --color-slate: oklch(0.235 0.005 286);
+  --color-raised: oklch(0.27 0.006 286);
+  /* Borders are alpha, so they blend into whatever they sit on. */
+  --color-hairline: oklch(1 0 0 / 0.1);
+  --color-ivory: oklch(0.955 0.013 84);
+  --color-stone: oklch(0.715 0.012 75);
+  --color-champagne: oklch(0.75 0.085 80);
+  --color-champagne-light: oklch(0.84 0.085 82);
+  --color-champagne-deep: oklch(0.53 0.08 75);
+  --color-ember: oklch(0.37 0.06 60);
   --color-transparent: transparent;
 
   --font-*: initial;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", Menlo, monospace;
   --font-brand: var(--font-bodoni), "Didot", "Bodoni 72", serif;
 
   --text-*: initial;
@@ -38,9 +45,15 @@
 
   --radius-*: initial;
   --radius-card: 1rem;
+  /* Nested corners: an inner radius is the outer radius minus the padding between them (panels use p-6). */
+  --radius-panel: 2.25rem;
+  --radius-inner: 0.75rem;
   --radius-full: 9999px;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Slow in, slow out for things that travel; a spring for things that land. */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: linear(0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121 24.3%, 1.13 26.3%, 1.12 28.8%, 1.065 33.5%, 0.993 41.1%, 0.98 44.2%, 0.982 49.1%, 1.002 59.1%, 1.004 63.5%, 1.001 79.6%, 1);
 
   --animate-rise: rise 0.9s var(--ease-out) both;
   --animate-fade: fade 0.6s var(--ease-out) both;
@@ -78,6 +91,11 @@
   }
 }
 
+/* Clears the fixed mobile tab bar (4rem) plus the home-indicator inset. */
+@utility pb-nav {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+
 html {
   color-scheme: dark;
   background: var(--color-onyx);
@@ -93,7 +111,17 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-:focus-visible {
+/* Tailwind v4 no longer gives buttons a pointer cursor, so restore it for everything clickable. */
+:where(button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, select, input[type="range"], input[type="checkbox"], input[type="radio"], label[for]) {
+  cursor: pointer;
+}
+
+:where(button:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed;
+}
+
+/* Headings and regions that receive focus programmatically (tabindex="-1") don't need a ring. */
+:focus-visible:not([tabindex="-1"]) {
   outline: 2px solid var(--color-ivory);
   outline-offset: 2px;
 }
@@ -109,4 +137,349 @@ body {
   [data-marquee] {
     animation: none !important;
   }
+}
+
+/* ---------- Hairpin loader (components/ui/hairpin-loader.tsx) ----------
+   Breakcore on a 170 BPM beat (353ms): hard-cut blooms, a glitching monogram, racing outlined type.
+   Glitches stay small; nothing flashes the full screen. */
+.hl {
+  --beat: 353ms;
+  --hl-r: #ff3d7f;
+  --hl-c: #3df2ff;
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 48%, color-mix(in srgb, var(--color-champagne) 16%, transparent), transparent 70%),
+    var(--color-onyx);
+  animation: hl-in 0.35s 0.12s var(--ease-out) both;
+}
+.hl--screen { position: fixed; z-index: 60; }
+.hl--panel { border-radius: inherit; background-color: color-mix(in srgb, var(--color-onyx) 88%, transparent); }
+
+.hl-type {
+  position: absolute;
+  inset: -20% -30%;
+  z-index: -1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.1em;
+  transform: rotate(-9deg) skewX(-8deg);
+  font-family: var(--font-brand);
+  font-size: clamp(3.5rem, 15vw, 11rem);
+  line-height: 0.82;
+  letter-spacing: -0.02em;
+  pointer-events: none;
+}
+.hl--panel .hl-type { font-size: clamp(2.5rem, 22cqi, 6rem); }
+.hl-type__row {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--color-champagne) 22%, transparent);
+  animation: hl-run 9s linear infinite, hl-stutter calc(var(--beat) * 8) steps(1) infinite;
+}
+.hl-type__row--1 { animation-direction: reverse, normal; animation-duration: 6s, calc(var(--beat) * 6); color: color-mix(in srgb, var(--color-champagne) 7%, transparent); }
+.hl-type__row--2 { animation-duration: 12s, calc(var(--beat) * 10); transform: scaleY(1.6); }
+.hl-type__row--3 { animation-direction: reverse, normal; animation-duration: 7.5s, calc(var(--beat) * 4); }
+
+.hl-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.9rem;
+  width: min(86vmin, 440px);
+  aspect-ratio: 1;
+}
+.hl--panel { container-type: size; }
+.hl--panel .hl-stage { width: min(92cqmin, 360px); gap: 0.6rem; }
+
+.hl-core { position: relative; display: grid; place-items: center; width: 34%; aspect-ratio: 1; }
+.hl-ring {
+  position: absolute;
+  inset: -14%;
+  border-radius: 999px;
+  background: conic-gradient(from 0deg, transparent 0 55%, var(--color-champagne-light) 70%, transparent 72% 85%, color-mix(in srgb, var(--color-champagne) 60%, transparent) 92%, transparent);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px));
+  animation: hl-spin calc(var(--beat) * 4) linear infinite, hl-ring-cut calc(var(--beat) * 8) steps(1) infinite;
+}
+.hl-mark { position: relative; width: 100%; aspect-ratio: 1; animation: hl-thump var(--beat) var(--ease-out) infinite; }
+.hl-mark__layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hl-mark__layer--main { filter: drop-shadow(0 0 14px color-mix(in srgb, var(--color-champagne) 55%, transparent)); animation: hl-slice calc(var(--beat) * 6) steps(1) infinite; }
+.hl-mark__layer--r { color: var(--hl-r); mix-blend-mode: screen; opacity: 0; animation: hl-split-r calc(var(--beat) * 6) steps(1) infinite; }
+.hl-mark__layer--c { color: var(--hl-c); mix-blend-mode: screen; opacity: 0; animation: hl-split-c calc(var(--beat) * 6) steps(1) infinite; }
+
+.hl-word, .hl-status { position: relative; z-index: 1; }
+.hl-word {
+  font-family: var(--font-brand);
+  font-size: clamp(1rem, 4.4vmin, 1.5rem);
+  letter-spacing: 0.55em;
+  margin-right: -0.55em;
+  color: var(--color-champagne);
+  animation: hl-word calc(var(--beat) * 6) steps(1) infinite;
+}
+.hl--panel .hl-word { font-size: clamp(0.85rem, 6cqmin, 1.15rem); }
+.hl-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 1rem;
+  font-size: var(--text-caption);
+  letter-spacing: 0.22em;
+  color: var(--color-stone);
+  text-align: center;
+}
+.hl-status__bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 10px; }
+.hl-status__bars i { width: 2px; height: 100%; background: var(--color-champagne); transform-origin: bottom; animation: hl-eq var(--beat) steps(3) infinite; }
+.hl-status__bars i:nth-child(2) { animation-delay: calc(var(--beat) / -3); }
+.hl-status__bars i:nth-child(3) { animation-delay: calc(var(--beat) / -1.5); animation-duration: calc(var(--beat) / 2); }
+.hl-status__bars i:nth-child(4) { animation-delay: calc(var(--beat) / -4); }
+
+.hl-bloom, .hl-petal { position: absolute; pointer-events: none; }
+.hl-bloom img, .hl-petal img { width: 100%; height: auto; }
+.hl-bloom { width: 30%; opacity: 0; filter: drop-shadow(0 8px 24px #000a); animation: hl-cut calc(var(--beat) * 8) steps(1) infinite; }
+.hl-bloom--0 { top: 6%; left: 4%; }
+.hl-bloom--1 { top: 10%; right: 2%; width: 26%; animation-delay: calc(var(--beat) * -3); }
+/* Kept to the lower-left corner: the centre-bottom of the stage is where the wordmark and status text are. */
+.hl-bloom--2 { bottom: -4%; left: 2%; width: 26%; animation-delay: calc(var(--beat) * -5.5); }
+.hl-petal { width: 9%; opacity: 0.85; animation: hl-fall 3.4s linear infinite, hl-jitter calc(var(--beat) * 2) steps(2) infinite; }
+.hl-petal--0 { left: 22%; top: -8%; }
+.hl-petal--1 { left: 70%; top: -8%; animation-delay: -1.3s, 0s; }
+.hl-petal--2 { left: 48%; top: -8%; width: 7%; animation-delay: -2.4s, calc(var(--beat) * -1); }
+
+.hl-scan {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, #0000004d 0 1px, transparent 1px 3px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  opacity: 0.25;
+  animation: hl-grain 0.5s steps(4) infinite;
+}
+
+@keyframes hl-in { from { opacity: 0; } }
+@keyframes hl-run { to { transform: translateX(-50%); } }
+@keyframes hl-stutter { 0%, 100% { translate: 0; } 12% { translate: -2.5vw; } 13% { translate: 0; } 50% { translate: 1.5vw; } 51% { translate: 0; } }
+@keyframes hl-spin { to { rotate: 360deg; } }
+@keyframes hl-ring-cut { 0%, 100% { opacity: 1; scale: 1; } 25% { opacity: 0.45; } 26% { opacity: 1; scale: 1.06; } 27% { scale: 1; } 62% { opacity: 0.4; } 64% { opacity: 1; } }
+@keyframes hl-thump { 0% { scale: 1.07; } 40%, 100% { scale: 1; } }
+@keyframes hl-slice {
+  0%, 100% { clip-path: none; translate: 0; }
+  16% { clip-path: inset(18% 0 52% 0); translate: 4px 0; }
+  17% { clip-path: inset(60% 0 12% 0); translate: -5px 0; }
+  19% { clip-path: none; translate: 0; }
+  66% { clip-path: inset(40% 0 38% 0); translate: -3px 0; }
+  67% { clip-path: none; translate: 0; }
+}
+@keyframes hl-split-r { 0%, 100% { opacity: 0; translate: 0; } 16% { opacity: 0.5; translate: -3px 1px; } 19% { opacity: 0; translate: 0; } 66% { opacity: 0.4; translate: 2px -1px; } 68% { opacity: 0; } }
+@keyframes hl-split-c { 0%, 100% { opacity: 0; translate: 0; } 16% { opacity: 0.5; translate: 3px -1px; } 19% { opacity: 0; translate: 0; } 66% { opacity: 0.4; translate: -2px 1px; } 68% { opacity: 0; } }
+@keyframes hl-word {
+  0%, 100% { text-shadow: none; translate: 0; }
+  16% { text-shadow: 2px 0 color-mix(in srgb, var(--hl-r) 60%, transparent), -2px 0 color-mix(in srgb, var(--hl-c) 60%, transparent); translate: 2px 0; }
+  19% { text-shadow: none; translate: 0; }
+  66% { text-shadow: -1px 0 color-mix(in srgb, var(--hl-r) 50%, transparent), 1px 0 color-mix(in srgb, var(--hl-c) 50%, transparent); }
+  68% { text-shadow: none; }
+}
+@keyframes hl-eq { 0% { scale: 1 0.3; } 33% { scale: 1 1; } 66% { scale: 1 0.55; } }
+@keyframes hl-cut {
+  0% { opacity: 0; rotate: -12deg; scale: 0.9; }
+  6% { opacity: 1; rotate: -12deg; scale: 1; }
+  24% { opacity: 1; rotate: 14deg; scale: 1.08; }
+  37% { opacity: 1; rotate: 4deg; scale: 0.96 1.04; }
+  44% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes hl-fall { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(1200%) rotate(320deg); } }
+@keyframes hl-jitter { 0%, 100% { translate: 0; } 50% { translate: 6px 0; } }
+@keyframes hl-grain { 0% { background-position: 0 0, 0 0; } 25% { background-position: 0 1px, -30px 20px; } 50% { background-position: 0 2px, 40px -10px; } 75% { background-position: 0 1px, -15px -35px; } }
+
+/* Reduced motion: a still composition, two blooms resting beside the monogram. */
+.hl--still, .hl--still * { animation: none !important; }
+.hl--still .hl-bloom--0, .hl--still .hl-bloom--1 { opacity: 0.9; }
+.hl--still .hl-petal { opacity: 0.6; }
+.hl--still .hl-petal--0 { top: 20%; }
+.hl--still .hl-petal--1 { top: 64%; }
+.hl--still .hl-petal--2 { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .hl, .hl * { animation: none !important; }
+}
+/* Nothing keeps animating in a hidden tab. */
+.hl--paused, .hl--paused * { animation-play-state: paused !important; }
+
+/* ---------- Visual language: grain, gradients, blooms, surfaces ---------- */
+
+/* Grainient (components/fx/grainient.tsx) */
+.gr { background: var(--color-onyx); }
+.gr > span { position: absolute; border-radius: 9999px; filter: blur(70px); will-change: transform; }
+.gr__a { width: 55%; aspect-ratio: 1; left: -8%; top: -25%; animation: gr-a 26s ease-in-out infinite alternate; }
+.gr__b { width: 45%; aspect-ratio: 1; right: -10%; top: 5%; animation: gr-b 32s ease-in-out infinite alternate; }
+.gr__c { width: 60%; aspect-ratio: 1.6; left: 20%; bottom: -45%; animation: gr-c 38s ease-in-out infinite alternate; }
+.gr--gold .gr__a { background: color-mix(in srgb, var(--color-champagne) 34%, transparent); }
+.gr--gold .gr__b { background: color-mix(in srgb, var(--color-ember) 70%, transparent); }
+.gr--gold .gr__c { background: color-mix(in srgb, var(--color-champagne-deep) 38%, transparent); }
+.gr--ember .gr__a { background: color-mix(in srgb, var(--color-ember) 85%, transparent); }
+.gr--ember .gr__b { background: color-mix(in srgb, var(--color-champagne) 22%, transparent); }
+.gr--ember .gr__c { background: color-mix(in srgb, var(--color-champagne-deep) 45%, transparent); }
+.gr--mist .gr__a { background: color-mix(in srgb, var(--color-champagne-light) 14%, transparent); }
+.gr--mist .gr__b { background: color-mix(in srgb, var(--color-stone) 14%, transparent); }
+.gr--mist .gr__c { background: color-mix(in srgb, var(--color-champagne) 12%, transparent); }
+.gr__grain {
+  inset: 0 !important;
+  width: auto !important;
+  border-radius: 0 !important;
+  filter: none !important;
+  opacity: 0.32;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@keyframes gr-a { to { transform: translate(18%, 22%) scale(1.15); } }
+@keyframes gr-b { to { transform: translate(-22%, 18%) scale(0.9); } }
+@keyframes gr-c { to { transform: translate(-16%, -14%) scale(1.2); } }
+
+/* Page backdrop: a band at the top of a page that melts into the background. */
+.backdrop-fade {
+  -webkit-mask-image: linear-gradient(to bottom in oklch, #000 0%, #000 45%, transparent 100%);
+  mask-image: linear-gradient(to bottom in oklch, #000 0%, #000 45%, transparent 100%);
+}
+
+/* Blooms (components/fx/bloom.tsx) */
+.bloom { filter: drop-shadow(0 18px 40px color-mix(in srgb, var(--color-onyx) 70%, transparent)); }
+.bloom--float { animation: bloom-float 14s ease-in-out infinite alternate; }
+@keyframes bloom-float { from { translate: 0 0; } to { translate: 0 -14px; } }
+
+/* Surfaces: panels with a lit top edge and a little grain, never flat. */
+.surface {
+  position: relative;
+  border: 1px solid var(--color-hairline);
+  background:
+    linear-gradient(180deg in oklch, color-mix(in oklch, var(--color-champagne) 7%, transparent), transparent 42%),
+    var(--color-graphite);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-champagne-light) 14%, transparent);
+}
+.surface--grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Gold headline accent: the italic word in a serif heading. */
+.accent-word { font-style: italic; background: linear-gradient(180deg in oklch, var(--color-champagne-light), var(--color-champagne) 70%, var(--color-champagne-deep)); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: 0.06em; }
+
+/* On phones the headline sits over the flowers; keep them as a hint, not a backdrop. */
+@media (max-width: 767px) {
+  .page-bloom { opacity: 0.3 !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr > span, .bloom--float { animation: none !important; }
+}
+
+/* ---------- Motion and depth (components/fx/motion-layer.tsx drives the pointer parts) ---------- */
+
+:root {
+  --r-panel: var(--radius-panel);
+  --r-tile: var(--radius-inner);
+}
+
+/* Raised: one step lighter, for something sitting on a surface. */
+.surface-raised {
+  border: 1px solid var(--color-hairline);
+  background: linear-gradient(180deg in oklch, color-mix(in oklch, var(--color-champagne) 6%, transparent), transparent 60%), var(--color-raised);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.08);
+}
+
+/* Press: squash on impact, spring back on release. Transitions, not keyframes, so a press can be abandoned mid-way. */
+.press {
+  transition: transform 280ms var(--ease-spring), box-shadow 200ms var(--ease-out), border-color 200ms var(--ease-out), background-color 200ms var(--ease-out), filter 200ms var(--ease-out);
+}
+.press:active:not(:disabled) {
+  transform: scale(1.02, 0.94);
+  transition-duration: 90ms;
+  transition-timing-function: var(--ease-out);
+}
+
+/* Ripple from the exact point that was pressed. */
+.ripple-host { position: relative; overflow: hidden; isolation: isolate; }
+.ripple {
+  position: absolute;
+  z-index: -1;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: radial-gradient(circle in oklch, oklch(1 0 0 / 0.45), oklch(1 0 0 / 0) 70%);
+  animation: ripple 520ms var(--ease-out) forwards;
+}
+@keyframes ripple { to { transform: scale(var(--ripple-scale, 30)); opacity: 0; } }
+
+/* Staggered entrances: one after another, each well under 300ms. */
+.stagger-in { animation: stagger-in 260ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
+@keyframes stagger-in { from { opacity: 0; transform: translateY(10px) scale(0.985); } }
+.pop-in { animation: pop-in 300ms var(--ease-spring) both; }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.8); } }
+
+/* Depth: a card tilts toward the pointer and catches a highlight. */
+[data-tilt] {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 260ms var(--ease-out);
+  will-change: transform;
+}
+[data-tilt]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--shine, 0);
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%) in oklch, oklch(0.95 0.05 85 / 0.18), transparent 55%);
+  transition: opacity 260ms var(--ease-out);
+}
+
+/* Icon swap: the outgoing icon blurs as it fades, the incoming one sharpens as it lands. */
+.icon-swap { display: inline-grid; }
+.icon-swap > * { grid-area: 1 / 1; transition: opacity 200ms var(--ease-out), filter 200ms var(--ease-out), transform 300ms var(--ease-spring); }
+.icon-swap > [data-off] { opacity: 0; filter: blur(4px); transform: scale(0.6); }
+
+/* Carousels: fade the edges so cut-off items read as "more this way". */
+.fade-edges-x { mask: linear-gradient(90deg, transparent, black 15% 85%, transparent); }
+/* Chip rows that start flush left: fade only the trailing edge. */
+.fade-end { mask: linear-gradient(90deg, black 0 92%, transparent); }
+@media (max-width: 767px) {
+  .fade-edges { mask: linear-gradient(90deg, black 0 88%, transparent); }
+}
+
+/* Follow-through: a nav icon that just received something bumps, then settles a beat later. */
+.bump { animation: bump 520ms var(--ease-spring); }
+@keyframes bump { 0% { transform: scale(1); } 30% { transform: scale(1.35, 0.8); } 55% { transform: scale(0.9, 1.15); } 100% { transform: scale(1); } }
+
+/* Peak: the try-on result is revealed from the bottom with a gold edge. */
+.reveal-sweep { animation: reveal-sweep 900ms var(--ease-in-out) both; }
+@keyframes reveal-sweep { from { clip-path: inset(100% 0 0 0); filter: brightness(1.6) saturate(0.6); } 60% { filter: brightness(1.15); } to { clip-path: inset(0 0 0 0); filter: none; } }
+
+/* Dialogs on wide screens grow out of the point that opened them (transform-origin is set from the pointer). */
+@media (min-width: 1024px) {
+  dialog.origin-aware[open] { animation: sheet-pop 260ms var(--ease-out) both; }
+}
+@keyframes sheet-pop { from { opacity: 0; transform: scale(0.88); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .press, .press:active, [data-tilt], .icon-swap > * { transition: none !important; transform: none !important; }
+  .ripple, .stagger-in, .pop-in, .bump, .reveal-sweep, dialog.origin-aware[open] { animation: none !important; }
 }

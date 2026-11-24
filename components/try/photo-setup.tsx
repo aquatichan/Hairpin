@@ -1,24 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { resizeToJpeg } from "@/lib/image";
-import { localStore } from "@/lib/local-store";
+import { localStore, type StoredPhoto } from "@/lib/local-store";
+import { Dither } from "../fx/dither";
 import { Button, buttonClass } from "../ui/button";
 import { Notice } from "../ui/notice";
 
-/** First step of the try flow: save one private photo, with explicit consent. */
+const CONSENT = "My photo is sent to the AI provider I chose, only to make my previews. It stays on this device otherwise, and I can delete it anytime.";
+
+async function readPhoto(file: File) {
+  // Downscaled and re-encoded as JPEG: small enough for the provider and stripped of metadata such as location.
+  return resizeToJpeg(file);
+}
+
+/** The empty stage: pick or take one photo, preview it, agree, save. */
 export function PhotoSetup() {
   const [picked, setPicked] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const consentId = useId();
+
+  useEffect(() => () => void (preview && URL.revokeObjectURL(preview)), [preview]);
 
   async function onPick(file: File | undefined) {
     if (!file) return;
     setError(null);
     try {
-      const blob = await resizeToJpeg(file);
-      if (preview) URL.revokeObjectURL(preview);
+      const blob = await readPhoto(file);
       setPicked(blob);
       setPreview(URL.createObjectURL(blob));
     } catch {
@@ -33,31 +43,107 @@ export function PhotoSetup() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-6">
-      <h1 className="font-serif text-headline">Add your photo</h1>
-      <p className="text-body text-stone">One photo, used for every try-on. Face the camera, in good light, with your face and hair fully in frame.</p>
-      <div className="relative aspect-[4/5] overflow-hidden rounded-card border border-dashed border-hairline bg-graphite">
-        {/* eslint-disable-next-line @next/next/no-img-element -- local blob URL */}
-        {preview && <img src={preview} alt="Your photo" className="absolute inset-0 size-full object-cover" />}
+    <div className="flex flex-col gap-4">
+      <div className="surface relative aspect-[4/5] overflow-hidden rounded-card border-dashed">
+        {!preview && <Dither className="opacity-[0.16]" cell={5} interactive />}
+        {preview ? (
+          // eslint-disable-next-line @next/next/no-img-element -- local blob URL
+          <img src={preview} alt="The photo you picked" className="absolute inset-0 size-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 text-center">
+            <FaceGuide />
+            <p className="font-serif text-title">Add your photo</p>
+            <p className="max-w-xs text-body text-stone">Face the camera in soft, even light, with your whole face and hair in frame. No hats or filters.</p>
+          </div>
+        )}
       </div>
-      <div className="flex gap-2">
-        <label className={`${buttonClass("ghost")} flex-1 cursor-pointer`}>
+      <div className="flex flex-wrap gap-2">
+        <label className={`${buttonClass(preview ? "ghost" : "primary")} flex-1 cursor-pointer focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-champagne-light`}>
           {preview ? "Choose another" : "Choose a photo"}
-          <input type="file" accept="image/*" className="sr-only" onChange={(e) => onPick(e.target.files?.[0])} />
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="sr-only" onChange={(e) => onPick(e.target.files?.[0])} />
         </label>
-        <label className={`${buttonClass("ghost")} flex-1 cursor-pointer lg:hidden`}>
-          Take a photo
+        <label className={`${buttonClass("ghost")} flex-1 cursor-pointer focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-champagne-light lg:hidden`}>
+          Take a selfie
           <input type="file" accept="image/*" capture="user" className="sr-only" onChange={(e) => onPick(e.target.files?.[0])} />
         </label>
       </div>
-      <label className="flex items-start gap-3 text-body">
-        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 size-4 accent-champagne" />
-        My photo is sent to an AI provider to make previews. It stays private and I can delete it anytime.
-      </label>
+      {picked && (
+        <>
+          <label htmlFor={consentId} className="flex cursor-pointer items-start gap-3 text-body text-stone">
+            <input id={consentId} type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-champagne" />
+            {CONSENT}
+          </label>
+          <Button onClick={save} disabled={!consent}>
+            Use this photo
+          </Button>
+        </>
+      )}
       {error && <Notice tone="error">{error}</Notice>}
-      <Button onClick={save} disabled={!picked || !consent}>
-        Save my photo
-      </Button>
     </div>
+  );
+}
+
+/** The saved photo in the side panel, with replace and a two-step remove. */
+export function PhotoCard({ photo, onError }: { photo: StoredPhoto; onError: (message: string) => void }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+
+  useEffect(() => {
+    const u = URL.createObjectURL(photo.blob);
+    queueMicrotask(() => setUrl(u));
+    return () => URL.revokeObjectURL(u);
+  }, [photo.blob]);
+
+  async function replace(file: File | undefined) {
+    if (!file) return;
+    try {
+      // Consent was given for "my photo"; replacing keeps it and the panel repeats what happens to it.
+      await localStore.put("photo", { ...photo, blob: await readPhoto(file), createdAt: Date.now() });
+    } catch {
+      onError("That file couldn't be read as a photo. Try a JPEG or PNG.");
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-4">
+      <div className="relative size-16 shrink-0 overflow-hidden rounded-card bg-graphite">
+        {/* eslint-disable-next-line @next/next/no-img-element -- local blob URL */}
+        {url && <img src={url} alt="Your photo" className="absolute inset-0 size-full object-cover" />}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <p className="text-body font-medium">Your photo</p>
+        <p className="text-caption text-stone">Private, kept on this device.</p>
+      </div>
+      {confirming ? (
+        <div className="flex shrink-0 gap-2">
+          <button type="button" onClick={() => localStore.remove("photo", "active")} className="rounded-full border border-ivory px-3 py-1.5 text-caption font-medium hover:bg-ivory hover:text-onyx">
+            Remove
+          </button>
+          <button type="button" onClick={() => setConfirming(false)} className="rounded-full px-3 py-1.5 text-caption text-stone hover:text-ivory">
+            Keep
+          </button>
+        </div>
+      ) : (
+        <div className="flex shrink-0 gap-1">
+          <label className="cursor-pointer rounded-full border border-hairline px-3 py-1.5 text-caption font-medium hover:border-stone/50 focus-within:outline-2 focus-within:outline-champagne-light">
+            Replace
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="sr-only" onChange={(e) => replace(e.target.files?.[0])} />
+          </label>
+          <button type="button" onClick={() => setConfirming(true)} className="rounded-full px-3 py-1.5 text-caption text-stone hover:text-ivory">
+            Remove
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FaceGuide() {
+  return (
+    <svg viewBox="0 0 64 64" className="size-14 text-champagne" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden>
+      <ellipse cx="32" cy="34" rx="13" ry="16" strokeDasharray="3 3" />
+      <path d="M19 27c2-9 8-13 13-13s11 4 13 13" />
+      <path d="M8 16V8h8M56 16V8h-8M8 48v8h8M56 48v8h-8" />
+    </svg>
   );
 }

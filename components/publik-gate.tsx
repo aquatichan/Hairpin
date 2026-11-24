@@ -3,9 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { setChoice, useAiChoice } from "@/lib/ai-choice";
 import { authHeader } from "@/lib/api-client";
+import { VENDORS, VENDOR_INFO, looksLikeKey, type Vendor } from "@/lib/ai-vendors";
+import { useFreeStatus } from "@/lib/free-status";
 import { Button, buttonClass } from "./ui/button";
 import { Logo } from "./ui/logo";
 import { Notice } from "./ui/notice";
+import { HairpinLoader } from "./ui/hairpin-loader";
 
 /**
  * The second half of sign-in. After Google sign-in, the server has already
@@ -69,31 +72,56 @@ function Screen({ title, children }: { title: string; children: React.ReactNode 
   );
 }
 
-function OwnKeyForm({ onBack }: { onBack: () => void }) {
+/** "Use my own key": pick the provider, paste the key. It stays on this device, per account. */
+export function OwnKeyForm({ onBack }: { onBack: () => void }) {
+  const [vendor, setVendor] = useState<Vendor>("openai");
   const [key, setKey] = useState("");
+  const info = VENDOR_INFO[vendor];
+  const trimmed = key.trim();
   return (
     <form
       className="flex flex-col gap-4"
       onSubmit={(e) => {
         e.preventDefault();
-        if (key.trim()) setChoice({ mode: "own", key: key.trim() });
+        if (looksLikeKey(trimmed)) setChoice({ mode: "own", vendor, key: trimmed });
       }}
     >
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-2 text-body text-stone">Provider</legend>
+        {VENDORS.map((v) => (
+          <label
+            key={v}
+            className={`flex cursor-pointer gap-3 rounded-card border p-3 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-champagne-light ${vendor === v ? "border-champagne/70 bg-champagne/5" : "border-hairline hover:border-stone/50"}`}
+          >
+            <input type="radio" name="vendor" value={v} checked={vendor === v} onChange={() => setVendor(v)} className="mt-1 size-4 shrink-0 accent-champagne" />
+            <span className="flex flex-col gap-0.5">
+              <span className="text-body font-medium text-ivory">{VENDOR_INFO[v].label}</span>
+              <span className="text-caption text-stone">{VENDOR_INFO[v].covers}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
       <label className="flex flex-col gap-2 text-body text-stone">
-        Your OpenAI API key
+        Your {info.label} API key
         <input
           type="password"
           autoComplete="off"
           spellCheck={false}
           value={key}
           onChange={(e) => setKey(e.target.value)}
-          placeholder="sk-…"
+          placeholder={info.placeholder}
           className="h-12 rounded-card border border-hairline bg-slate px-4 text-body text-ivory"
         />
       </label>
-      <p className="text-caption text-stone">It stays on this device. Hairpin&apos;s server uses it for each request you make and never stores it.</p>
+      <p className="text-caption text-stone">
+        It stays on this device, for this account only. Hairpin&apos;s server passes it to {info.label} for each request you make and never stores it.{" "}
+        <a href={info.keysUrl} target="_blank" rel="noopener" className="underline underline-offset-4 hover:text-ivory">
+          Get a {info.label} key
+        </a>
+      </p>
+      {trimmed && !looksLikeKey(trimmed) && <p className="text-caption text-ivory">That doesn&apos;t look like a complete API key.</p>}
       <div className="flex gap-2">
-        <button type="submit" className={`${buttonClass("primary")} flex-1`} disabled={!key.trim()}>
+        <button type="submit" className={`${buttonClass("primary")} flex-1`} disabled={!looksLikeKey(trimmed)}>
           Use this key
         </button>
         <Button variant="ghost" onClick={onBack}>
@@ -106,6 +134,7 @@ function OwnKeyForm({ onBack }: { onBack: () => void }) {
 
 export function PublikGate({ children }: { children: React.ReactNode }) {
   const choice = useAiChoice();
+  const free = useFreeStatus();
   const [status, setStatus] = useState<Status>({ state: "checking" });
   const [waitingUntil, setWaitingUntil] = useState<number | null>(null);
   const [timedOut, setTimedOut] = useState(false);
@@ -160,11 +189,7 @@ export function PublikGate({ children }: { children: React.ReactNode }) {
   if (status.state === "signed_out") return <>{children}</>; // the app shell sends them back to Google sign-in
 
   if (status.state === "checking" || redirecting || choice === undefined) {
-    return (
-      <Screen title={redirecting ? "Taking you to publik…" : "Signing you in…"}>
-        <div className="h-1 w-24 animate-pulse rounded-full bg-hairline" aria-hidden />
-      </Screen>
-    );
+    return <HairpinLoader variant="screen" label={redirecting ? "Taking you to publik" : "Signing you in"} />;
   }
 
   if (status.state === "unreachable" || status.state === "not_connected") {
@@ -218,16 +243,21 @@ export function PublikGate({ children }: { children: React.ReactNode }) {
             <p className="text-body text-stone">
               {status.hasPlan
                 ? "Your publik plan can pay for try-ons, Decode and Barber Briefs."
-                : "You don't have a publik plan yet. Get one, or use an OpenAI key of your own."}
+                : "You don't have a publik plan yet. Start publik's 7-day free trial, try a few looks free, or use an AI key of your own."}
             </p>
             {status.hasPlan ? (
               <Button onClick={() => setChoice({ mode: "publik" })}>Connect your plan</Button>
             ) : (
               status.topUpUrl && (
                 <a href={status.topUpUrl} target="_blank" rel="noopener" className={buttonClass("primary")}>
-                  Get a plan
+                  Start free trial or get a plan
                 </a>
               )
+            )}
+            {!status.hasPlan && free?.enabled && free.remaining > 0 && (
+              <Button variant="ghost" onClick={() => setChoice({ mode: "free" })}>
+                Try {free.remaining} free try-on{free.remaining === 1 ? "" : "s"}
+              </Button>
             )}
             <Button variant="ghost" onClick={() => setOwnKey(true)}>
               Use my own key

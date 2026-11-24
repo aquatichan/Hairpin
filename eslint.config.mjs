@@ -8,6 +8,8 @@ const eslintConfig = defineConfig([
   // Override default ignores of eslint-config-next.
   globalIgnores([
     "scripts/**",
+    // Vendored third-party runtime (see public/mediapipe/NOTICE.txt).
+    "public/mediapipe/**",
     // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",

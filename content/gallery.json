@@ -1,1 +1,223 @@
-[]
+[
+  {
+    "id": "defined-twists",
+    "name": "Defined twists",
+    "length": "medium",
+    "texture": "coily",
+    "notes": "Two-strand twists from the root, finishing around the jaw. Ask for a clean taper at the sides and a sharp shape-up at the hairline.",
+    "alt": "Man with chin-length defined two-strand twists, low taper at the sides",
+    "image": "/assets/transformations/transform-01-after.webp",
+    "before": "/assets/transformations/transform-01-before.webp",
+    "illustrative": true,
+    "width": 1086,
+    "height": 1448,
+    "credit": "",
+    "creditUrl": "",
+    "hairType": "4b",
+    "audience": "men",
+    "tags": [
+      "twists",
+      "coils",
+      "taper",
+      "natural"
+    ],
+    "faceShapes": [
+      "oval",
+      "oblong",
+      "heart"
+    ]
+  },
+  {
+    "id": "polished-waves",
+    "name": "Polished waves",
+    "length": "long",
+    "texture": "wavy",
+    "notes": "Long, soft-polished waves with face-framing layers that start at the cheekbone. Ask to keep weight at the ends and add gentle movement through the mid-lengths.",
+    "alt": "Woman with long blonde hair in polished, face-framing waves",
+    "image": "/assets/transformations/transform-02-after.webp",
+    "before": "/assets/transformations/transform-02-before.webp",
+    "illustrative": true,
+    "width": 1086,
+    "height": 1448,
+    "credit": "",
+    "creditUrl": "",
+    "hairType": "2b",
+    "audience": "women",
+    "tags": [
+      "waves",
+      "long-layers",
+      "layers"
+    ],
+    "faceShapes": [
+      "oval",
+      "round",
+      "square",
+      "diamond"
+    ]
+  },
+  {
+    "id": "sleek-low-bun",
+    "name": "Sleek low bun",
+    "length": "long",
+    "texture": "straight",
+    "notes": "A center-parted, sleek low bun at the nape. Best on hair that reaches past the shoulders; ask for long layers so the bun sits full without bulk at the crown.",
+    "alt": "Woman with dark hair pulled into a sleek, center-parted low bun",
+    "image": "/assets/transformations/transform-03-after.webp",
+    "before": "/assets/transformations/transform-03-before.webp",
+    "illustrative": true,
+    "width": 1086,
+    "height": 1448,
+    "credit": "",
+    "creditUrl": "",
+    "hairType": "1a",
+    "audience": "women",
+    "tags": [
+      "bun",
+      "sleek",
+      "center-part"
+    ],
+    "faceShapes": [
+      "oval",
+      "heart",
+      "diamond"
+    ]
+  },
+  {
+    "id": "natural-afro",
+    "name": "Natural afro",
+    "length": "medium",
+    "texture": "coily",
+    "notes": "A rounded, full afro shaped evenly all around. Ask for a shape-up that keeps the silhouette round and removes any uneven bulk at the sides.",
+    "alt": "Woman with a full, rounded natural coily afro",
+    "image": "/assets/transformations/transform-05-after.webp",
+    "before": "/assets/transformations/transform-05-before.webp",
+    "illustrative": true,
+    "width": 1086,
+    "height": 1448,
+    "credit": "",
+    "creditUrl": "",
+    "hairType": "4c",
+    "audience": "women",
+    "tags": [
+      "afro",
+      "coils",
+      "natural"
+    ],
+    "faceShapes": [
+      "oval",
+      "oblong",
+      "heart"
+    ]
+  },
+  {
+    "id": "tousled-bob",
+    "name": "Tousled bob",
+    "length": "short",
+    "texture": "straight",
+    "notes": "A jaw-to-collarbone bob with soft internal layers and a slightly piecey finish. Ask for texture through the ends rather than a blunt line.",
+    "alt": "Woman with a tousled, softly layered dark bob",
+    "image": "/assets/transformations/transform-06-after.webp",
+    "before": "/assets/transformations/transform-06-before.webp",
+    "illustrative": true,
+    "width": 1086,
+    "height": 1448,
+    "credit": "",
+    "creditUrl": "",
+    "hairType": "1b",
+    "audience": "women",
+    "tags": [
+      "bob",
+      "layers",
+      "texture",
+      "chin-length"
+    ],
+    "faceShapes": [
+      "oval",
+      "oblong",
+      "heart"
+    ]
+  },
+  {
+    "id": "messy-textured-top",
+    "name": "Messy textured top",
+    "length": "short",
+    "texture": "curly",
+    "notes": "Shorter sides with length and loose texture left on top. Ask for a scissor-over-comb on the sides and point-cutting on top to keep it light.",
+    "alt": "Man with short sides and messy, textured curls on top",
+    "image": "/assets/transformations/transform-07-after.webp",
+    "before": "/assets/transformations/transform-07-before.webp",
+    "illustrative": true,
+    "width": 1086,
+    "height": 1448,
+    "credit": "",
+    "creditUrl": "",
+    "hairType": "3a",
+    "audience": "men",
+    "tags": [
+      "curls",
+      "texture",
+      "volume-top",
+      "taper"
+    ],
+    "faceShapes": [
+      "round",
+      "oval",
+      "square"
+    ]
+  },
+  {
+    "id": "tousled-fringe",
+    "name": "Tousled fringe",
+    "length": "short",
+    "texture": "wavy",
+    "notes": "A short, layered cut with a soft fringe falling forward. Ask to keep the fringe at brow length and texturize the top for movement.",
+    "alt": "Young man with a short, wavy cut and a tousled fringe",
+    "image": "/assets/transformations/transform-08-after.webp",
+    "before": "/assets/transformations/transform-08-before.webp",
+    "illustrative": true,
+    "width": 1086,
+    "height": 1448,
+    "credit": "",
+    "creditUrl": "",
+    "hairType": "2a",
+    "audience": "men",
+    "tags": [
+      "fringe",
+      "waves",
+      "texture",
+      "low-maintenance"
+    ],
+    "faceShapes": [
+      "oval",
+      "oblong",
+      "square"
+    ]
+  },
+  {
+    "id": "curly-top",
+    "name": "Curly top",
+    "length": "short",
+    "texture": "curly",
+    "notes": "Defined curls left full on top with tidy, shorter sides. Ask for a soft taper and to cut the curls dry so they sit as they naturally fall.",
+    "alt": "Man with defined curls on top and tidy short sides",
+    "image": "/assets/transformations/transform-10-after.webp",
+    "before": "/assets/transformations/transform-10-before.webp",
+    "illustrative": true,
+    "width": 1086,
+    "height": 1448,
+    "credit": "",
+    "creditUrl": "",
+    "hairType": "3b",
+    "audience": "men",
+    "tags": [
+      "curls",
+      "volume-top",
+      "fade"
+    ],
+    "faceShapes": [
+      "round",
+      "oval",
+      "heart"
+    ]
+  }
+]

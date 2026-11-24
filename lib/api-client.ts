@@ -1,5 +1,6 @@
 import { getChoice } from "./ai-choice";
 import { firebaseApp, firebaseConfigured } from "./firebase";
+import { TEST_USER_KEY, isTestUid, testAuthEnabled } from "./test-auth";
 
 export class ApiClientError extends Error {
   constructor(
@@ -12,6 +13,10 @@ export class ApiClientError extends Error {
 }
 
 export async function authHeader(): Promise<Record<string, string>> {
+  if (testAuthEnabled) {
+    const uid = localStorage.getItem(TEST_USER_KEY);
+    return isTestUid(uid) ? { Authorization: `Bearer test:${uid}` } : {};
+  }
   if (!firebaseConfigured) return {};
   const { getAuth } = await import("firebase/auth");
   const token = await getAuth(firebaseApp()).currentUser?.getIdToken();
@@ -23,7 +28,8 @@ export async function apiFetch(path: string, init: RequestInit) {
   try {
     // "Use my own key": the key rides along with this request only.
     const choice = getChoice();
-    const ownKey: Record<string, string> = choice?.mode === "own" ? { "x-hairpin-own-key": choice.key } : {};
+    const ownKey: Record<string, string> =
+      choice?.mode === "own" ? { "x-hairpin-own-key": choice.key, "x-hairpin-own-vendor": choice.vendor } : choice?.mode === "free" ? { "x-hairpin-free": "1" } : {};
     response = await fetch(path, { ...init, headers: { ...init.headers, ...(await authHeader()), ...ownKey } });
   } catch {
     throw new ApiClientError("You seem to be offline. Check your connection and try again.", "offline");

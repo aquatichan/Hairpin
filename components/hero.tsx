@@ -12,7 +12,7 @@ export function Hero() {
       <section aria-label="Haircuts in the library" className="absolute inset-0 animate-fade lg:left-1/3" style={{ animationDuration: "1.6s" }}>
         <TiltedMarquee looks={libraryLooks} />
       </section>
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-onyx via-onyx/60 to-transparent lg:bg-linear-to-r lg:via-onyx/40" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-t/oklch from-onyx via-onyx/60 to-transparent lg:bg-linear-to-r/oklch lg:via-onyx/40" aria-hidden />
 
       <header className="relative animate-fade p-6 lg:px-12 lg:pt-12">
         <Logo />

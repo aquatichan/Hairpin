@@ -34,6 +34,20 @@ export default function TermsPage() {
         submit images that are unlawful, that depict minors in a sexual way, or that you do not have permission to use.
       </p>
 
+      <h2>Cuts you share publicly</h2>
+      <p>
+        You can keep a cut private on your device, or choose &ldquo;Share publicly (reviewed first)&rdquo;. If you share, you keep ownership of the photo, and you give Hairpin a
+        non-exclusive, free licence to store a resized copy and to show that photo and the details you entered to other Hairpin members until you delete it. The licence
+        applies only to cuts you choose to share, ends when you delete the cut (or your account), and does not allow us to sell the photo or use it in advertising.
+      </p>
+      <ul>
+        <li>Only share photos you took or have permission to use, and only of people who have agreed to be shown. Do not share photos of children.</li>
+        <li>The photo should be about the hair. No nudity, no hateful, harassing or misleading content, no personal information, and no one else&rsquo;s photo without their consent.</li>
+        <li>We review shared cuts before they are shown, and may decline or remove any cut at our discretion. Members can report a cut; enough reports take it down until we have checked it.</li>
+        <li>If a photo of you or your work was shared without your permission, or you want something removed, contact us below and we will act promptly.</li>
+        <li>We may limit how many cuts you can share, and may remove sharing from accounts that abuse it.</li>
+      </ul>
+
       <h2>AI results are illustrative</h2>
       <p>
         Try-on previews and the example images on this site are AI-generated and illustrative. They are not a promise or guarantee of how a haircut will look on you, and a

@@ -170,7 +170,9 @@
   transition: background .35s var(--hp-ease),
     color .35s var(--hp-ease),
     border-color .35s var(--hp-ease),
-    box-shadow .35s var(--hp-ease);
+    box-shadow .35s var(--hp-ease),
+    transform .25s var(--hp-ease),
+    filter .25s var(--hp-ease);
   border-radius: 999px;
   align-items: center;
   gap: 10px;
@@ -185,7 +187,15 @@
 }
 
 .hp-btn:hover .hp-icon {
-  transform: translateX(3px);
+  transform: translateX(4px);
+}
+
+.hp-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.hp-btn:not(:disabled):active {
+  transform: translateY(0) scale(.98);
 }
 
 .hp-btn:disabled {
@@ -200,7 +210,8 @@
 }
 
 .hp-btn--solid:hover {
-  box-shadow: inset 0 1px #fff0d299, 0 14px 40px -10px #c9a46ab3;
+  filter: brightness(1.08);
+  box-shadow: inset 0 1px #fff0d2cc, 0 0 0 1px #e8cf9f66, 0 18px 44px -10px #c9a46acc;
 }
 
 .hp-btn--outline {
@@ -2231,4 +2242,13 @@ div.hp-card {
 .hp-petal--d4 { left: 38%; bottom: 2vw; width: 34px; height: 40px; opacity: 0.7; }
 @media (max-width: 767px) {
   .hp-petal--d2, .hp-petal--d4 { display: none; }
+}
+
+/* The Discover strip is pulled up over the hero (negative margin, higher z-index).
+   Let clicks pass through its empty padding so the hero buttons stay reachable. */
+.hp-discover { pointer-events: none; }
+:where(.hp-discover > *) { pointer-events: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-btn:not(:disabled):hover, .hp-btn:not(:disabled):active { transform: none; }
 }

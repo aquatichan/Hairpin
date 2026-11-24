@@ -1,6 +1,7 @@
 import "server-only";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { real } from "./env";
+import { isTestUid, serverTestAuthEnabled } from "./test-auth";
 
 /**
  * Returns the caller's Firebase uid, or null if the request carries no valid
@@ -13,6 +14,11 @@ const KEYS = createRemoteJWKSet(new URL("https://www.googleapis.com/service_acco
 export async function verifyCaller(request: Request): Promise<string | null> {
   const header = request.headers.get("authorization");
   const token = header?.startsWith("Bearer ") ? header.slice(7) : null;
+  // Development-only test accounts (lib/test-auth.ts): refused unless every server-side condition holds at runtime.
+  if (token?.startsWith("test:") && serverTestAuthEnabled()) {
+    const uid = token.slice(5);
+    return isTestUid(uid) ? uid : null;
+  }
   const projectId = real(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
   if (!token || !projectId) return null;
   try {
