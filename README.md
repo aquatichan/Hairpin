@@ -1,3 +1,9 @@
 # Hairpin
 
-Hairpin lets you try any haircut on your own photo before you sit in the barber's chair: browse the hair library or upload a screenshot of a cut you've seen, preview it on yourself, decode what it's called, and turn the one you like into a Barber Brief you can show your barber. It is a Next.js web app (installable as a PWA) that opens with Google sign-in followed by Sign in with publik, and runs each person's AI on their own publik plan or, if they prefer, their own OpenAI key. To run it, `npm install`, copy `.env.example` to `.env.local`, replace the `PLACEHOLDER_[...]` values you have, and `npm run dev`; anything left as a placeholder simply stays switched off. To fill the landing page, drop a darkened-friendly haircut clip at `public/hero/hero.mp4` (with an optional `public/hero/poster.jpg`) and fill the curated library by replacing the images in `content/looks-src/` (`placeholder_1.png` ... `placeholder_16.png`), editing each look's text in `content/curated-looks.json`, and running `npm run looks`.
+> https://hairpin-woad.vercel.app/
+
+> Hairpin is the Pinterest for hair.
+
+> It lets you try any haircut on your own photo before you sit in the barber's chair: browse the hair library or upload a screenshot of a cut you've seen, preview it on yourself, decode what it's called, and turn the one you like into a Barber Brief you can show your barber. 
+
+<img width="1968" height="9728" alt="hairpin-woad vercel app_ (1) (1)" src="https://github.com/user-attachments/assets/02e48eba-b196-498a-9688-45abe35f3460" />
