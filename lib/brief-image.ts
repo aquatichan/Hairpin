@@ -102,6 +102,9 @@ export async function briefToPng(brief: BarberBrief, opts: { story?: boolean; ph
   ctx.fillStyle = MUTED;
   ctx.font = `30px ${serif}`;
   ctx.fillText("made with Hairpin", x, cardY + cardH - 48);
+  ctx.font = `20px ${sans}`;
+  const note = "AI-assisted. Lengths and suitability are your barber's call.";
+  ctx.fillText(note, x + width - ctx.measureText(note).width, cardY + cardH - 52);
 
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Export failed"))), "image/png"));
 }

@@ -58,7 +58,7 @@ export function Marquee({ looks, offset = 0, reverse = false, duration = 80, hei
           // eslint-disable-next-line @next/next/no-img-element -- local, pre-sized photos; next/image adds nothing in a marquee
           <img src={look.image} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
         )}
-        <figcaption className="absolute inset-x-0 bottom-0 truncate bg-linear-to-t from-onyx/80 to-transparent p-3 text-caption text-ivory opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <figcaption className="absolute inset-x-0 bottom-0 truncate bg-linear-to-t/oklch from-onyx/80 to-transparent p-3 text-caption text-ivory opacity-0 transition-opacity duration-300 group-hover:opacity-100">
           {look.name}
         </figcaption>
       </figure>

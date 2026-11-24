@@ -12,8 +12,8 @@ export function Chip({
       type="button"
       aria-pressed={selected}
       onClick={onClick}
-      className={`h-8 shrink-0 rounded-full px-4 text-body font-medium transition-colors duration-200 ease-out ${
-        selected ? "bg-ivory text-onyx" : "bg-graphite text-stone hover:text-ivory"
+      className={`press ripple-host h-9 shrink-0 rounded-full border px-4 text-body font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-champagne-light ${
+        selected ? "border-champagne bg-linear-to-b/oklch from-champagne-light to-champagne text-onyx" : "border-hairline bg-graphite text-stone hover:border-stone/50 hover:text-ivory"
       }`}
     >
       {children}

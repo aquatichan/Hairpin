@@ -1,0 +1,10 @@
+MediaPipe Face Landmarker runtime, self-hosted so the app never fetches it from a third party at runtime.
+
+wasm/vision_wasm_internal.{js,wasm}: copied from the npm package @mediapipe/tasks-vision@1.2.3 (Apache-2.0).
+face_landmarker.task (3,758,596 bytes): the model linked from Google's Face Landmarker docs,
+  https://huggingface.co/litert-community/MediaPipe-FaceLandmarker/resolve/main/face_landmarker.task
+
+When upgrading @mediapipe/tasks-vision, copy the matching wasm files again: the runtime and the JS API must be the same version.
+
+Caching: next.config.ts serves /mediapipe/* with a one-year immutable cache. To upgrade, put the new files in a new
+folder (for example /mediapipe/v2) and point lib/face-detect.ts at it, so browsers fetch the new copy.

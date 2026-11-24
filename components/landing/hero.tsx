@@ -1,5 +1,5 @@
 import { AssetSlot } from "./asset-slot";
-import { ASSETS, TRANSFORMS } from "./assets";
+import { ASSETS } from "./assets";
 import { Botanical } from "./botanical";
 import { GoldArcs } from "./icons";
 import { StartButton } from "./start-button";
@@ -49,21 +49,6 @@ export function LandingHero() {
           </a>
         </div>
       </div>
-
-      <aside className="hp-hero__card hp-enter" style={{ "--hp-delay": "700ms" } as React.CSSProperties} aria-label="AI try-on preview">
-        <div className="hp-hero__cardthumb" aria-hidden>
-          <AssetSlot asset={TRANSFORMS[0].before} priority silhouette={false} showTag={false} decorative sizes="96px" />
-          <div className="hp-hero__cardafter">
-            <AssetSlot asset={TRANSFORMS[0].after} priority silhouette={false} showTag={false} decorative sizes="96px" />
-          </div>
-          <span className="hp-hero__cardline" />
-        </div>
-        <div className="hp-hero__cardtext">
-          <span className="hp-eyebrow">AI try-on</span>
-          <strong>See it on you first.</strong>
-          <span className="hp-fineprint">Illustrative preview</span>
-        </div>
-      </aside>
     </section>
   );
 }

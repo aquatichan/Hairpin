@@ -58,7 +58,10 @@ export function editImage(key: string, input: { prompt: string; images: Blob[]; 
   form.set("prompt", input.prompt);
   if (input.size) form.set("size", input.size);
   if (input.model) form.set("model", input.model);
-  for (const image of input.images) form.append("image[]", image);
+  input.images.forEach((image, i) => {
+    const ext = image.type === "image/png" ? "png" : image.type === "image/webp" ? "webp" : "jpg";
+    form.append("image[]", image, `${i === 0 ? "selfie" : "hairstyle-reference"}.${ext}`);
+  });
   return call<ImageResponse>(key, "/images/edits", { method: "POST", body: form });
 }
 

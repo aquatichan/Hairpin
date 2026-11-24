@@ -41,3 +41,25 @@ export const GoogleIcon = () => (
     <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
   </svg>
 );
+
+export const SavedFilledIcon = () => (
+  <svg {...base} fill="currentColor"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1Z" /></svg>
+);
+export const CloseIcon = () => (
+  <svg {...base}><path d="M6 6l12 12M18 6 6 18" /></svg>
+);
+export const ChevronLeftIcon = () => (
+  <svg {...base}><path d="m15 5-7 7 7 7" /></svg>
+);
+export const ChevronRightIcon = () => (
+  <svg {...base}><path d="m9 5 7 7-7 7" /></svg>
+);
+export const HideIcon = () => (
+  <svg {...base}><path d="M3 3l18 18" /><path d="M10.6 5.1A9.8 9.8 0 0 1 12 5c5 0 8.5 4.5 9.5 7-.4 1-1.2 2.3-2.3 3.5M6.6 6.6C4.6 8 3.2 10 2.5 12c1 2.5 4.5 7 9.5 7 1.8 0 3.4-.6 4.8-1.4" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /></svg>
+);
+export const PlusIcon = () => (
+  <svg {...base}><path d="M12 5v14M5 12h14" /></svg>
+);
+export const FaceIcon = () => (
+  <svg {...base}><path d="M12 3c4 0 7 3.2 7 7.6 0 4.6-3.2 10.4-7 10.4s-7-5.8-7-10.4C5 6.2 8 3 12 3Z" /><path d="M9.5 15.5c1.4 1 3.6 1 5 0" /></svg>
+);
