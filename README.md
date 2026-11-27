@@ -1,6 +1,6 @@
 # Hairpin
 
-> https://hairpin-woad.vercel.app/
+> https://1-hairpin.vercel.app/
 
 > Hairpin is the Pinterest for hair.
 
